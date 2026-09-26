@@ -1,7 +1,8 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
-/// Aurora sidebar: app identity, section rows with gradient icon tiles,
-/// counts, glass selection pill, and hover glow.
+/// Smoke-glass sidebar: app identity, section rows with counts, drop targets
+/// for organizing notes (drag a note onto a section to move it).
 struct SidebarView: View {
     @ObservedObject var viewModel: NotesViewModel
 
@@ -42,7 +43,7 @@ struct SidebarView: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 34, height: 34)
                 .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-                .shadow(color: AuroraPalette.accentIndigo.opacity(0.45), radius: 8, y: 3)
+                .shadow(color: Color.black.opacity(0.35), radius: 6, y: 3)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 1) {
@@ -58,72 +59,25 @@ struct SidebarView: View {
     }
 
     private func sectionRow(_ filter: NoteFilter, shortcut: String) -> some View {
-        let isSelected = viewModel.filter == filter
-        let count = viewModel.counts[filter] ?? 0
-
-        return Button {
-            withAnimation(Motion.panelSpring) {
-                viewModel.filter = filter
-            }
-        } label: {
-            HStack(spacing: DesignTokens.Spacing.m) {
-                iconTile(filter.symbolName, isActive: isSelected)
-                Text(filter.title)
-                    .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
-                    .foregroundStyle(isSelected ? Color.white : AuroraPalette.primaryText.opacity(0.82))
-                Spacer()
-                if count > 0 {
-                    Text("\(count)")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundStyle(isSelected ? Color.white.opacity(0.85) : AuroraPalette.tertiaryText)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 2)
-                        .background(
-                            Capsule().fill(
-                                isSelected ? Color.white.opacity(0.22) : Color.white.opacity(0.06)
-                            )
-                        )
+        SectionRow(
+            filter: filter,
+            shortcut: shortcut,
+            count: viewModel.counts[filter] ?? 0,
+            isSelected: viewModel.filter == filter,
+            isDropTarget: dropTargetFilter == filter,
+            onSelect: {
+                withAnimation(Motion.panelSpring) {
+                    viewModel.filter = filter
                 }
-            }
-            .padding(.horizontal, 9)
-            .padding(.vertical, 7)
-            .background {
-                if isSelected {
-                    RoundedRectangle(cornerRadius: 11, style: .continuous)
-                        .fill(AuroraPalette.accentGradientWide)
-                        .shadow(color: AuroraPalette.accentIndigo.opacity(0.5), radius: 10, y: 3)
-                }
-            }
-            .overlay {
-                if !isSelected {
-                    RoundedRectangle(cornerRadius: 11, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.05), lineWidth: 1)
-                }
-            }
-            .contentShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(filter.title), \(count) notes")
-        .accessibilityHint("Section ⌘\(shortcut)")
-        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+            },
+            onDropTargeted: { hovering in
+                dropTargetFilter = hovering ? filter : nil
+            },
+            onDrop: { handleDrop(providers: $0, filter: filter) }
+        )
     }
 
-    private func iconTile(_ symbol: String, isActive: Bool) -> some View {
-        RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .fill(
-                isActive
-                    ? AnyShapeStyle(Color.white.opacity(0.22))
-                    : AnyShapeStyle(AuroraPalette.accentGradient.opacity(0.85))
-            )
-            .frame(width: 24, height: 24)
-            .overlay(
-                Image(systemName: symbol)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(isActive ? Color.white : Color.white.opacity(0.95))
-            )
-            .shadow(color: AuroraPalette.accentIndigo.opacity(0.35), radius: 4, y: 1)
-    }
+    @State private var dropTargetFilter: NoteFilter?
 
     private var footer: some View {
         HStack(spacing: DesignTokens.Spacing.s) {
@@ -134,5 +88,124 @@ struct SidebarView: View {
             Spacer()
         }
         .accessibilityHidden(true)
+    }
+
+    // MARK: Drag & drop organizing
+
+    /// Dragging a note onto a section applies that section's meaning to the
+    /// current selection (the dragged row is part of it): Pinned pins, Trash
+    /// trashes, Inbox unpins/restores, All/Today restores from trash.
+    private func handleDrop(providers: [NSItemProvider], filter: NoteFilter) -> Bool {
+        guard !viewModel.selectedNotes.isEmpty else { return false }
+        let targets = viewModel.selectedNotes
+        for note in targets {
+            switch filter {
+            case .pinned:
+                viewModel.setPinned(note, true)
+            case .inbox:
+                viewModel.restore(note)
+                viewModel.setPinned(note, false)
+            case .all, .today:
+                viewModel.restore(note)
+            case .trash:
+                viewModel.trash(note)
+            }
+        }
+        return true
+    }
+}
+
+/// One sidebar section row: icon tile, title, count, selection wash, and a
+/// drop target ring when a dragged note hovers over it.
+private struct SectionRow: View {
+    @Environment(\.colorScheme) private var colorScheme
+    let filter: NoteFilter
+    let shortcut: String
+    let count: Int
+    let isSelected: Bool
+    let isDropTarget: Bool
+    let onSelect: () -> Void
+    let onDropTargeted: (Bool) -> Void
+    let onDrop: ([NSItemProvider]) -> Bool
+
+    @State private var hovered = false
+
+    var body: some View {
+        Button {
+            onSelect()
+        } label: {
+            rowLabel
+        }
+        .buttonStyle(.plain)
+        .background(rowBackground)
+        .overlay(selectionRing)
+        .contentShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+        .onDrop(of: [.text], isTargeted: $hovered, perform: onDrop)
+        .onChange(of: hovered) { _, newValue in
+            onDropTargeted(newValue)
+        }
+        .overlay(dropRing)
+        .accessibilityLabel("\(filter.title), \(count) notes")
+        .accessibilityHint("Section ⌘\(shortcut)")
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
+    private var rowLabel: some View {
+        HStack(spacing: DesignTokens.Spacing.m) {
+            iconTile
+            Text(filter.title)
+                .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
+                .foregroundStyle(isSelected ? AuroraPalette.selectionText(for: colorScheme) : AuroraPalette.primaryText.opacity(0.82))
+            Spacer()
+            if count > 0 {
+                Text("\(count)")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(isSelected ? AuroraPalette.selectionSecondaryText(for: colorScheme) : AuroraPalette.tertiaryText)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(Color.white.opacity(isSelected ? 0.18 : 0.05)))
+            }
+        }
+        .padding(.horizontal, 9)
+        .padding(.vertical, 7)
+    }
+
+    private var rowBackground: some View {
+        RoundedRectangle(cornerRadius: 11, style: .continuous)
+            .fill(isSelected ? AnyShapeStyle(AuroraPalette.selectionFill(for: colorScheme)) : AnyShapeStyle(Color.clear))
+    }
+
+    private var selectionRing: some View {
+        Group {
+            if isSelected {
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .strokeBorder(AuroraPalette.glassEdge, lineWidth: 1)
+            }
+        }
+    }
+
+    private var dropRing: some View {
+        Group {
+            if isDropTarget {
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .strokeBorder(AuroraPalette.frost.opacity(0.7), lineWidth: 1.5)
+            }
+        }
+    }
+
+    private var iconTile: some View {
+        RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .fill(
+                isSelected
+                    ? AnyShapeStyle(AuroraPalette.selectionFill(for: colorScheme))
+                    : AnyShapeStyle(Color.white.opacity(0.07))
+            )
+            .frame(width: 24, height: 24)
+            .overlay(
+                Image(systemName: filter.symbolName)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(isSelected ? AuroraPalette.selectionText(for: colorScheme) : AuroraPalette.secondaryText)
+            )
     }
 }

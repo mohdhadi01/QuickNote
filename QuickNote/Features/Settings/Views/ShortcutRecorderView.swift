@@ -79,13 +79,13 @@ struct ShortcutRecorderView: View {
             RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.s)
                 .fill(
                     isRecording
-                        ? AnyShapeStyle(AuroraPalette.accentGradient.opacity(0.22))
+                        ? AnyShapeStyle(AuroraPalette.inkGradient.opacity(0.22))
                         : AnyShapeStyle(Color.white.opacity(0.06))
                 )
             RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.s)
                 .strokeBorder(
                     isRecording
-                        ? AnyShapeStyle(AuroraPalette.accentGradient.opacity(0.8))
+                        ? AnyShapeStyle(AuroraPalette.inkGradient.opacity(0.8))
                         : AnyShapeStyle(AuroraPalette.glassEdge),
                     lineWidth: 1
                 )

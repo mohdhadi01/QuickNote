@@ -19,19 +19,22 @@ final class MainWindowKeyboardRouter {
     private var onEscape: () -> Bool // returns true when handled
     private var onSection: (Int) -> Void
     private var onFind: () -> Void
+    private var onSelectAll: () -> Void
 
     init(
         onArrow: @escaping (Int) -> Void,
         onReturn: @escaping () -> Void,
         onEscape: @escaping () -> Bool,
         onSection: @escaping (Int) -> Void,
-        onFind: @escaping () -> Void
+        onFind: @escaping () -> Void,
+        onSelectAll: @escaping () -> Void = {}
     ) {
         self.onArrow = onArrow
         self.onReturn = onReturn
         self.onEscape = onEscape
         self.onSection = onSection
         self.onFind = onFind
+        self.onSelectAll = onSelectAll
     }
 
     func install(for window: NSWindow?) {
@@ -57,6 +60,12 @@ final class MainWindowKeyboardRouter {
         // ⌘F — focus search (even while editing the editor).
         if modifiers == .command, event.charactersIgnoringModifiers == "f" {
             onFind()
+            return true
+        }
+
+        // ⌘A — select all visible notes (only outside of text editing).
+        if modifiers == .command, event.charactersIgnoringModifiers == "a", !editing {
+            onSelectAll()
             return true
         }
 

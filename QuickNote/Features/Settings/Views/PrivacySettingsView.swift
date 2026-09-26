@@ -36,6 +36,6 @@ struct PrivacySettingsView: View {
     private var shieldIcon: some View {
         Image(systemName: "checkmark.shield.fill")
             .font(.system(size: 16))
-            .foregroundStyle(AuroraPalette.accentGradient)
+            .foregroundStyle(AuroraPalette.inkGradient)
     }
 }

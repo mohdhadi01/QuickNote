@@ -40,9 +40,9 @@ struct QuickCaptureSettingsView: View {
         if shortcutService.isRegistered {
             HStack(spacing: 6) {
                 Circle()
-                    .fill(AuroraPalette.accentCyan)
+                    .fill(AuroraPalette.silver)
                     .frame(width: 7, height: 7)
-                    .shadow(color: AuroraPalette.accentCyan.opacity(0.8), radius: 4)
+                    .shadow(color: AuroraPalette.silver.opacity(0.8), radius: 4)
                 Text("Active")
                     .font(.system(size: 11.5, weight: .semibold))
                     .foregroundStyle(AuroraPalette.secondaryText)

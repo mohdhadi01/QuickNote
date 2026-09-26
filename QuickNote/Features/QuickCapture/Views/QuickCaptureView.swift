@@ -32,8 +32,8 @@ struct QuickCaptureView: View {
                 LinearGradient(
                     colors: [
                         Color.white.opacity(0.38),
-                        AuroraPalette.accentViolet.opacity(0.30),
-                        AuroraPalette.accentCyan.opacity(0.22),
+                        AuroraPalette.steel.opacity(0.30),
+                        AuroraPalette.silver.opacity(0.22),
                         Color.white.opacity(0.10),
                     ],
                     startPoint: .topLeading,
@@ -72,7 +72,7 @@ struct QuickCaptureView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "bolt.fill")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(AuroraPalette.accentGradient.opacity(0.85))
+                        .foregroundStyle(AuroraPalette.inkGradient.opacity(0.85))
                     Text("Capture a thought…")
                         .font(Typography.capturePlaceholder)
                         .foregroundStyle(AuroraPalette.tertiaryText)

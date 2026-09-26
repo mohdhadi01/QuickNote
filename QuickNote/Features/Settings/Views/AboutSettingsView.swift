@@ -10,7 +10,7 @@ struct AboutSettingsView: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 72, height: 72)
                 .clipShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
-                .shadow(color: AuroraPalette.accentIndigo.opacity(0.5), radius: 16, y: 6)
+                .shadow(color: AuroraPalette.graphite.opacity(0.5), radius: 16, y: 6)
                 .accessibilityHidden(true)
 
             VStack(spacing: DesignTokens.Spacing.xs) {

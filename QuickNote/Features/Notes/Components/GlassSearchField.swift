@@ -43,7 +43,7 @@ struct GlassSearchField: View {
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .strokeBorder(
-                    focused ? AnyShapeStyle(AuroraPalette.accentGradient.opacity(0.7)) : AnyShapeStyle(AuroraPalette.glassEdgeSoft),
+                    focused ? AnyShapeStyle(AuroraPalette.inkGradient.opacity(0.7)) : AnyShapeStyle(AuroraPalette.glassEdgeSoft),
                     lineWidth: 1
                 )
         )

@@ -17,7 +17,7 @@ struct OnboardingView: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 92, height: 92)
                     .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .shadow(color: AuroraPalette.accentIndigo.opacity(0.55), radius: 22, y: 8)
+                    .shadow(color: AuroraPalette.graphite.opacity(0.55), radius: 22, y: 8)
                     .accessibilityHidden(true)
 
                 VStack(spacing: DesignTokens.Spacing.s) {
@@ -68,7 +68,7 @@ struct OnboardingView: View {
                         .padding(.horizontal, 10)
                 }
                 .frame(minWidth: 46, minHeight: 46)
-                .shadow(color: AuroraPalette.accentIndigo.opacity(0.25), radius: 8, y: 3)
+                .shadow(color: AuroraPalette.graphite.opacity(0.25), radius: 8, y: 3)
             }
         }
         .accessibilityElement(children: .ignore)

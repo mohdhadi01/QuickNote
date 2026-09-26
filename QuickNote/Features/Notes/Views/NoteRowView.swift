@@ -1,23 +1,34 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
-/// A single note row: derived title, preview, relative timestamp, pin badge.
-/// The selected row gets the signature gradient pill.
+/// Drag payload carrying a note's identity (for in-app section drops) plus
+/// its text (for dragging into other apps).
+enum NoteDragType {
+    static let identifier = "com.quicknote.note"
+}
+
+/// A single note row: derived title, preview, timestamp, pin badge. Selected
+/// rows get a quiet white-glass wash. Draggable as text.
 struct NoteRowView: View {
     let note: Note
     let isSelected: Bool
+    let isPrimary: Bool
+    let selectionIds: Set<UUID>
     @State private var isHovered = false
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: DesignTokens.Spacing.s) {
                 Text(NoteContentFormatter.displayTitle(for: note.content))
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(isSelected ? Color.white : AuroraPalette.primaryText)
+                    .foregroundStyle(AuroraPalette.selectionText(for: colorScheme))
+                    .opacity(isSelected ? 1.0 : 0.9)
                     .lineLimit(1)
                 if note.isPinned {
                     Image(systemName: "pin.fill")
                         .font(.system(size: 8.5, weight: .bold))
-                        .foregroundStyle(isSelected ? Color.white.opacity(0.9) : AuroraPalette.accentCyan)
+                        .foregroundStyle(AuroraPalette.silver)
                         .accessibilityLabel("Pinned")
                 }
                 Spacer(minLength: 0)
@@ -25,12 +36,14 @@ struct NoteRowView: View {
             if !NoteContentFormatter.displayPreview(for: note.content).isEmpty {
                 Text(NoteContentFormatter.displayPreview(for: note.content))
                     .font(.system(size: 11.5))
-                    .foregroundStyle(isSelected ? Color.white.opacity(0.78) : AuroraPalette.secondaryText)
+                    .foregroundStyle(
+                        isSelected ? AuroraPalette.selectionSecondaryText(for: colorScheme) : AuroraPalette.secondaryText
+                    )
                     .lineLimit(2)
             }
             Text(NoteDateFormatting.listTimestamp(for: note.createdAt))
                 .font(.system(size: 10.5, weight: .medium))
-                .foregroundStyle(isSelected ? Color.white.opacity(0.66) : AuroraPalette.tertiaryText)
+                .foregroundStyle(AuroraPalette.tertiaryText)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
@@ -42,23 +55,37 @@ struct NoteRowView: View {
         .overlay {
             if isSelected {
                 RoundedRectangle(cornerRadius: 13, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
+                    .strokeBorder(AuroraPalette.glassEdge, lineWidth: 1)
             }
         }
         .contentShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
         .onHover { isHovered = $0 }
+        .onDrag {
+            // Dragging a row hands its content to any app; section drops in
+            // our own sidebar act on the current selection.
+            NSItemProvider(object: note.content as NSString)
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
     private var rowFill: AnyShapeStyle {
         if isSelected {
-            return AnyShapeStyle(AuroraPalette.accentGradient)
+            return AnyShapeStyle(AuroraPalette.selectionFill(for: colorScheme))
         }
         if isHovered {
-            return AnyShapeStyle(Color.white.opacity(0.07))
+            return AnyShapeStyle(
+                colorScheme == .dark
+                    ? Color.white.opacity(0.06)
+                    : Color.black.opacity(0.035)
+            )
         }
-        return AnyShapeStyle(Color.white.opacity(0.03))
+        return AnyShapeStyle(
+            colorScheme == .dark
+                ? Color.white.opacity(0.03)
+                : Color.black.opacity(0.018)
+        )
     }
 
     private var accessibilityText: String {

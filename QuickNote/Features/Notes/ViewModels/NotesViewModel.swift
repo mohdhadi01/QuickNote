@@ -2,7 +2,7 @@ import AppKit
 import Combine
 import Foundation
 
-/// Drives the main notes window: current section, search, selection, and all
+/// Drives the main notes window: sections, search, multi-selection, and all
 /// list operations. All persistence goes through the repository (spec §16).
 @MainActor
 final class NotesViewModel: ObservableObject {
@@ -18,19 +18,22 @@ final class NotesViewModel: ObservableObject {
     }
     @Published private(set) var notes: [Note] = []
     @Published private(set) var counts: [NoteFilter: Int] = [:]
-    @Published var selectedNoteID: UUID? {
-        didSet {
-            if oldValue != selectedNoteID { syncSelectionToNotes() }
-        }
-    }
+
+    /// Multi-selection: every highlighted row. The primary note drives the
+    /// editor; batch actions apply to the whole set.
+    @Published var selectedNoteIDs: Set<UUID> = []
+    @Published var primaryNoteID: UUID?
+
     /// Incremented to move keyboard focus into the editor.
     @Published var editorFocusRequest = 0
     /// Incremented to move keyboard focus into the search field.
     @Published var searchFocusRequest = 0
 
     var selectedNote: Note? {
-        notes.first { $0.id == selectedNoteID }
+        notes.first { $0.id == primaryNoteID }
     }
+
+    var selectedCount: Int { selectedNoteIDs.count }
 
     private let repository: NoteRepositoryProtocol
     private let noteService: NoteService?
@@ -68,7 +71,7 @@ final class NotesViewModel: ObservableObject {
             }
             notes = fetched
             computeCounts()
-            syncSelectionToNotes()
+            pruneSelection()
         } catch {
             Log.persistence.error("Fetch failed: \(String(describing: error), privacy: .public)")
         }
@@ -88,17 +91,176 @@ final class NotesViewModel: ObservableObject {
         ]
     }
 
-    /// Arrow-key navigation in the list.
-    func moveSelection(_ delta: Int) {
-        guard !notes.isEmpty else { return }
-        let currentIndex = notes.firstIndex { $0.id == selectedNoteID } ?? (delta > 0 ? -1 : 0)
-        let nextIndex = min(max(currentIndex + delta, 0), notes.count - 1)
-        selectedNoteID = notes[nextIndex].id
+    /// Drops selection entries that no longer exist in the current list;
+    /// falls back to the first note so the editor is never orphaned.
+    private func pruneSelection() {
+        let visible = Set(notes.map(\.id))
+        selectedNoteIDs = selectedNoteIDs.intersection(visible)
+
+        if let currentPrimary = primaryNoteID, !visible.contains(currentPrimary) {
+            primaryNoteID = nil
+        }
+        if primaryNoteID == nil, let first = notes.first?.id {
+            primaryNoteID = first
+            selectedNoteIDs = [first]
+        }
+        if primaryNoteID != nil && !selectedNoteIDs.contains(primaryNoteID!) {
+            selectedNoteIDs.insert(primaryNoteID!)
+        }
     }
 
-    func clearSearch() {
-        searchText = ""
+    /// Arrow-key navigation moves the primary selection.
+    func moveSelection(_ delta: Int) {
+        guard !notes.isEmpty else { return }
+        let currentIndex = notes.firstIndex { $0.id == primaryNoteID } ?? (delta > 0 ? -1 : 0)
+        let nextIndex = min(max(currentIndex + delta, 0), notes.count - 1)
+        selectSingle(noteID: notes[nextIndex].id)
     }
+
+    // MARK: Selection
+
+    func selectSingle(noteID: UUID) {
+        selectedNoteIDs = [noteID]
+        primaryNoteID = noteID
+    }
+
+    /// Click semantics: plain click selects one, ⌘ click toggles membership,
+    /// ⇧ click extends a range from the primary note.
+    func handleClick(noteID: UUID, command: Bool, shift: Bool) {
+        if shift, let anchor = primaryNoteID,
+           let startIndex = notes.firstIndex(where: { $0.id == anchor }),
+           let endIndex = notes.firstIndex(where: { $0.id == noteID }) {
+            let range = startIndex <= endIndex ? startIndex...endIndex : endIndex...startIndex
+            selectedNoteIDs = Set(notes[range].map(\.id))
+            return
+        }
+        if command {
+            if selectedNoteIDs.contains(noteID) {
+                selectedNoteIDs.remove(noteID)
+                if primaryNoteID == noteID {
+                    primaryNoteID = selectedNoteIDs.first
+                }
+            } else {
+                selectedNoteIDs.insert(noteID)
+                primaryNoteID = noteID
+            }
+            return
+        }
+        selectSingle(noteID: noteID)
+    }
+
+    func selectAllVisible() {
+        selectedNoteIDs = Set(notes.map(\.id))
+    }
+
+    func clearSelection() {
+        selectedNoteIDs = []
+        primaryNoteID = nil
+    }
+
+    // MARK: Actions (single or batch)
+
+    func trash(_ note: Note) { try? repository.moveToTrash(note) }
+    func restore(_ note: Note) { try? repository.restore(note) }
+    func deletePermanently(_ note: Note) { try? repository.deletePermanently(note) }
+    func setPinned(_ note: Note, _ pinned: Bool) { try? repository.setPinned(note, pinned) }
+    func togglePin(_ note: Note) { setPinned(note, !note.isPinned) }
+    func updateContent(_ note: Note, to text: String) { try? repository.updateContent(note, to: text) }
+
+    func copyToPasteboard(_ note: Note) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(note.content, forType: .string)
+    }
+
+    var selectedNotes: [Note] {
+        notes.filter { selectedNoteIDs.contains($0.id) }
+    }
+
+    func note(withID id: UUID) -> Note? {
+        notes.first { $0.id == id }
+    }
+
+    func trashSelected() {
+        selectedNotes.forEach { try? repository.moveToTrash($0) }
+    }
+
+    func restoreSelected() {
+        selectedNotes.forEach { try? repository.restore($0) }
+    }
+
+    func setPinnedSelected(_ pinned: Bool) {
+        selectedNotes.forEach { try? repository.setPinned($0, pinned) }
+    }
+
+    func deleteSelectedPermanently() {
+        selectedNotes.forEach { try? repository.deletePermanently($0) }
+    }
+
+    /// Copies every selected note, separated by blank lines.
+    func copySelectedToPasteboard() {
+        let combined = selectedNotes.map(\.content).joined(separator: "\n\n")
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(combined, forType: .string)
+    }
+
+    /// Merges all selected notes into one new note (newest-last order) and
+    /// moves the originals to trash. Returns true when a merge happened.
+    @discardableResult
+    func mergeSelected() -> Bool {
+        let selected = selectedNotes
+        guard selected.count > 1 else { return false }
+        let combined = selected
+            .sorted { $0.createdAt < $1.createdAt }
+            .map(\.content)
+            .joined(separator: "\n\n—\n\n")
+        do {
+            let merged = try noteService?.createManualNote()
+            try repository.updateContent(merged ?? selected[0], to: combined)
+            selected.forEach { try? repository.moveToTrash($0) }
+            if let merged {
+                refresh()
+                selectSingle(noteID: merged.id)
+            }
+            return true
+        } catch {
+            Log.persistence.error("Merge failed: \(String(describing: error), privacy: .public)")
+            return false
+        }
+    }
+
+    // MARK: Creation
+
+    func createNewNote() {
+        do {
+            let note = try noteService?.createManualNote()
+            if let note {
+                refresh()
+                selectSingle(noteID: note.id)
+            }
+            editorFocusRequest += 1
+        } catch {
+            Log.persistence.error("Could not create note: \(String(describing: error), privacy: .public)")
+        }
+    }
+
+    /// Drop target: creates a note from text or a dropped file's content.
+    func createNote(from rawText: String) {
+        guard NoteContentFormatter.normalizedCaptureText(rawText) != nil else { return }
+        do {
+            let note = try noteService?.createManualNote()
+            if let note {
+                try repository.updateContent(note, to: NoteContentFormatter.normalizedCaptureText(rawText) ?? "")
+                refresh()
+                selectSingle(noteID: note.id)
+            }
+        } catch {
+            Log.persistence.error("Drop-create failed: \(String(describing: error), privacy: .public)")
+        }
+    }
+
+    // MARK: Search
 
     /// Debounced search refresh (spec §22: no work per keystroke without a
     /// debounce).
@@ -111,60 +273,7 @@ final class NotesViewModel: ObservableObject {
         }
     }
 
-    private func syncSelectionToNotes() {
-        if let selectedNoteID, notes.contains(where: { $0.id == selectedNoteID }) { return }
-        selectedNoteID = notes.first?.id
-    }
-
-    // MARK: Actions
-
-    func trash(_ note: Note) {
-        try? repository.moveToTrash(note)
-    }
-
-    func restore(_ note: Note) {
-        try? repository.restore(note)
-    }
-
-    func deletePermanently(_ note: Note) {
-        try? repository.deletePermanently(note)
-    }
-
-    func setPinned(_ note: Note, _ pinned: Bool) {
-        try? repository.setPinned(note, pinned)
-    }
-
-    func togglePin(_ note: Note) {
-        setPinned(note, !note.isPinned)
-    }
-
-    func updateContent(_ note: Note, to text: String) {
-        try? repository.updateContent(note, to: text)
-    }
-
-    func copyToPasteboard(_ note: Note) {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(note.content, forType: .string)
-    }
-
-    func createNewNote() {
-        do {
-            let note = try noteService?.createManualNote()
-            selectedNoteID = note?.id
-            editorFocusRequest += 1
-        } catch {
-            Log.persistence.error("Could not create note: \(String(describing: error), privacy: .public)")
-        }
-    }
-
-    func trashSelected() {
-        guard let selectedNote else { return }
-        trash(selectedNote)
-    }
-
-    func togglePinSelected() {
-        guard let selectedNote else { return }
-        togglePin(selectedNote)
+    func clearSearch() {
+        searchText = ""
     }
 }

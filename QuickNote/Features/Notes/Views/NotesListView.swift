@@ -1,13 +1,16 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
-/// The notes list column: glass search pill, section title, gradient "+" and
-/// a custom floating-row list with full keyboard navigation.
+/// The notes list column: glass search pill, section title, graphite "+",
+/// multi-select rows (⌘/⇧ click), keyboard navigation, drop targets for
+/// text and files, and batch context menus.
 struct NotesListView: View {
     @ObservedObject var viewModel: NotesViewModel
-    @State private var notePendingPermanentDelete: Note?
+    @State private var notePendingPermanentDelete = false
     @State private var searchFocused = false
     @State private var router: MainWindowKeyboardRouter?
+    @State private var isDropTargeted = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -15,14 +18,12 @@ struct NotesListView: View {
             list
         }
         .confirmationDialog(
-            "Delete this note permanently? This cannot be undone.",
-            isPresented: deleteConfirmationBinding,
+            deleteTitle,
+            isPresented: $notePendingPermanentDelete,
             titleVisibility: .visible
         ) {
             Button("Delete Permanently", role: .destructive) {
-                if let note = notePendingPermanentDelete {
-                    viewModel.deletePermanently(note)
-                }
+                viewModel.deleteSelectedPermanently()
             }
             Button("Cancel", role: .cancel) {}
         }
@@ -31,6 +32,11 @@ struct NotesListView: View {
         .onChange(of: viewModel.searchFocusRequest) { _, _ in
             searchFocused = true
         }
+    }
+
+    private var deleteTitle: String {
+        let count = viewModel.selectedNoteIDs.count
+        return "Delete \(count) note\(count == 1 ? "" : "s") permanently? This cannot be undone."
     }
 
     // MARK: Header
@@ -53,12 +59,12 @@ struct NotesListView: View {
                         .frame(width: 30, height: 30)
                         .background(
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(AuroraPalette.accentGradient)
-                                .shadow(color: AuroraPalette.accentIndigo.opacity(0.45), radius: 8, y: 3)
+                                .fill(AuroraPalette.inkGradient)
+                                .shadow(color: Color.black.opacity(0.35), radius: 6, y: 3)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
+                                .strokeBorder(Color.white.opacity(0.22), lineWidth: 1)
                         )
                 }
                 .buttonStyle(.plain)
@@ -80,8 +86,16 @@ struct NotesListView: View {
                         .padding(.vertical, 2)
                         .background(Capsule().fill(Color.white.opacity(0.06)))
                 }
+                if viewModel.selectedCount > 1 {
+                    Text("\(viewModel.selectedCount) selected")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(AuroraPalette.secondaryText)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(Color.white.opacity(0.09)))
+                }
                 Spacer()
-                Text("↑↓ to navigate · ⏎ to edit")
+                Text("↑↓ navigate · ⏎ edit · ⇧⌘ click multi-select")
                     .font(.system(size: 10))
                     .foregroundStyle(AuroraPalette.tertiaryText)
                     .accessibilityHidden(true)
@@ -107,41 +121,136 @@ struct NotesListView: View {
             ScrollView {
                 LazyVStack(spacing: 6) {
                     if viewModel.notes.isEmpty {
+                        dropHint
                         EmptyStateView(
                             symbolName: isSearching ? "magnifyingglass" : viewModel.filter.symbolName,
-                            title: isSearching ? "No matching notes." : viewModel.filter.emptyStateTitle
+                            title: isSearching ? "No matching notes." : viewModel.filter.emptyStateTitle,
+                            hint: isSearching ? nil : "⌘N"
                         )
                         .padding(.top, DesignTokens.Spacing.xxxl)
                     } else {
                         ForEach(viewModel.notes) { note in
-                            NoteRowView(note: note, isSelected: note.id == viewModel.selectedNoteID)
-                                .id(note.id)
-                                .contentShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
-                                .onTapGesture { viewModel.selectedNoteID = note.id }
-                                .contextMenu { contextMenu(for: note) }
+                            NoteRowView(
+                                note: note,
+                                isSelected: viewModel.selectedNoteIDs.contains(note.id),
+                                isPrimary: viewModel.primaryNoteID == note.id,
+                                selectionIds: viewModel.selectedNoteIDs
+                            )
+                            .id(note.id)
+                            .contentShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                            .onTapGesture(count: 2) {
+                                viewModel.selectSingle(noteID: note.id)
+                                viewModel.editorFocusRequest += 1
+                            }
+                            .simultaneousGesture(
+                                TapGesture().modifiers(.command).onEnded {
+                                    viewModel.handleClick(noteID: note.id, command: true, shift: false)
+                                }
+                            )
+                            .simultaneousGesture(
+                                TapGesture().modifiers(.shift).onEnded {
+                                    viewModel.handleClick(noteID: note.id, command: false, shift: true)
+                                }
+                            )
+                            .simultaneousGesture(
+                                TapGesture().onEnded {
+                                    viewModel.handleClick(noteID: note.id, command: false, shift: false)
+                                }
+                            )
+                            .contextMenu { contextMenu(for: note) }
                         }
                     }
                 }
                 .padding(.horizontal, DesignTokens.Spacing.m)
                 .padding(.bottom, DesignTokens.Spacing.l)
             }
-            .onChange(of: viewModel.selectedNoteID) { _, newID in
+            .onChange(of: viewModel.primaryNoteID) { _, newID in
                 if let newID {
                     proxy.scrollTo(newID, anchor: .center)
                 }
             }
+            .overlay {
+                if isDropTargeted && viewModel.notes.isEmpty {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(AuroraPalette.frost.opacity(0.6), lineWidth: 1.5)
+                        .padding(DesignTokens.Spacing.l)
+                }
+            }
+            .onDrop(of: [.text], isTargeted: $isDropTargeted) { providers in
+                handleDrop(providers)
+            }
         }
         .accessibilityIdentifier("notes-list")
+    }
+
+    @ViewBuilder
+    private var dropHint: some View {
+        if !isSearching {
+            HStack(spacing: DesignTokens.Spacing.s) {
+                Image(systemName: "arrow.down.doc")
+                    .font(.system(size: 11))
+                    .foregroundStyle(AuroraPalette.tertiaryText)
+                Text("Drop text or .txt files here to capture")
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(AuroraPalette.tertiaryText)
+            }
+            .padding(.top, DesignTokens.Spacing.xl)
+        }
+    }
+
+    // MARK: Drops
+
+    private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
+        var handled = false
+        for provider in providers {
+            if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
+                handled = true
+                _ = provider.loadObject(ofClass: NSString.self) { object, _ in
+                    guard let string = object as? String else { return }
+                    Task { @MainActor in
+                        viewModel.createNote(from: string)
+                    }
+                }
+            }
+        }
+        return handled
     }
 
     // MARK: Context menus
 
     @ViewBuilder
     private func contextMenu(for note: Note) -> some View {
-        if note.deletedAt != nil {
+        let batch = viewModel.selectedNoteIDs.contains(note.id) && viewModel.selectedCount > 1
+        if batch {
+            let allTrashed = viewModel.selectedNotes.allSatisfy { $0.deletedAt != nil }
+            let anyPinned = viewModel.selectedNotes.contains { $0.isPinned }
+
+            if allTrashed {
+                Button("Restore \(viewModel.selectedCount) Notes") { viewModel.restoreSelected() }
+                Divider()
+                Button("Delete Permanently…", role: .destructive) {
+                    notePendingPermanentDelete = true
+                }
+            } else {
+                Button(anyPinned ? "Unpin \(viewModel.selectedCount) Notes" : "Pin \(viewModel.selectedCount) Notes") {
+                    viewModel.setPinnedSelected(!anyPinned)
+                }
+                Divider()
+                Button("Copy \(viewModel.selectedCount) Notes") { viewModel.copySelectedToPasteboard() }
+                Button("Merge Into One Note") { viewModel.mergeSelected() }
+                Divider()
+                Button("Move \(viewModel.selectedCount) to Trash", role: .destructive) {
+                    viewModel.trashSelected()
+                }
+            }
+        } else if note.deletedAt != nil {
             Button("Restore") { viewModel.restore(note) }
+            Divider()
+            Button("Copy") { viewModel.copyToPasteboard(note) }
+            Divider()
             Button("Delete Permanently…", role: .destructive) {
-                notePendingPermanentDelete = note
+                viewModel.selectSingle(noteID: note.id)
+                notePendingPermanentDelete = true
             }
         } else {
             Button(note.isPinned ? "Unpin" : "Pin") { viewModel.togglePin(note) }
@@ -152,17 +261,12 @@ struct NotesListView: View {
         }
     }
 
-    private var deleteConfirmationBinding: Binding<Bool> {
-        Binding(
-            get: { notePendingPermanentDelete != nil },
-            set: { if !$0 { notePendingPermanentDelete = nil } }
-        )
-    }
-
     // MARK: Actions
 
     private func selectFirstSearchResult() {
-        viewModel.selectedNoteID = viewModel.notes.first?.id
+        if let first = viewModel.notes.first {
+            viewModel.selectSingle(noteID: first.id)
+        }
         viewModel.editorFocusRequest += 1
     }
 
@@ -180,7 +284,8 @@ struct NotesListView: View {
                     withAnimation(Motion.panelSpring) { viewModel.filter = filters[index] }
                 }
             },
-            onFind: { viewModel.searchFocusRequest += 1 }
+            onFind: { viewModel.searchFocusRequest += 1 },
+            onSelectAll: { viewModel.selectAllVisible() }
         )
         installed.install(for: NSApp.keyWindow ?? NSApp.mainWindow ?? NSApp.windows.first)
         router = installed
@@ -193,6 +298,12 @@ struct NotesListView: View {
         }
         if searchFocused {
             searchFocused = false
+            return true
+        }
+        if viewModel.selectedCount > 1 {
+            if let primary = viewModel.primaryNoteID {
+                viewModel.selectSingle(noteID: primary)
+            }
             return true
         }
         // Leave the editor, back to the list.

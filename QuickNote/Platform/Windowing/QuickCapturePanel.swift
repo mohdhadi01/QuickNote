@@ -52,10 +52,10 @@ final class QuickCapturePanel: NSPanel {
         contentViewController = hosting
 
         // Native macOS Liquid Glass behind the SwiftUI content (spec §10),
-        // tinted toward the aurora accent.
+        // with a whisper of cool neutral tint.
         let glass = NSGlassEffectView()
         glass.cornerRadius = DesignTokens.CornerRadius.capture
-        glass.tintColor = NSColor(calibratedRed: 0.42, green: 0.38, blue: 0.95, alpha: 0.16)
+        glass.tintColor = NSColor(calibratedRed: 0.88, green: 0.90, blue: 0.94, alpha: 0.10)
         glass.contentView = hosting.view
         // hostingView must resize with the glass view.
         hosting.view.autoresizingMask = [.width, .height]

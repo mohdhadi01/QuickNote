@@ -1,7 +1,10 @@
 import SwiftUI
+import AppKit
 
-/// Document-like note editor with automatic, debounced persistence (spec §21),
-/// glass header with metadata, and a subtle footer with live counts.
+/// Quick-note editor: one flowing surface where the first line reads as the
+/// heading (styled visually only), with a minimal floating action bar — no
+/// separate title chrome, because quick captures don't have titles.
+/// Autosaves with a short debounce (spec §21).
 struct NoteEditorView: View {
     let note: Note
     @ObservedObject var viewModel: NotesViewModel
@@ -9,30 +12,30 @@ struct NoteEditorView: View {
     @State private var text: String = ""
     @State private var saveTask: Task<Void, Never>?
     @State private var notePendingPermanentDelete = false
-    @FocusState private var editorFocused: Bool
+    @State private var editorTextView: NSTextView?
 
     private var isInTrash: Bool { note.deletedAt != nil }
 
     var body: some View {
         VStack(spacing: 0) {
-            header
-            Divider()
-                .overlay(Color.white.opacity(0.08))
-            editor
-            Divider()
-                .overlay(Color.white.opacity(0.08))
+            ZStack(alignment: .top) {
+                editor
+                actionBar
+            }
             footer
         }
         .id(note.id)
         .onAppear {
             text = note.content
-            if viewModel.editorFocusRequest > 0 { editorFocused = true }
+            if viewModel.editorFocusRequest > 0 {
+                focusEditor()
+            }
         }
         .onChange(of: text) { _, newValue in
             scheduleSave(newValue)
         }
         .onChange(of: viewModel.editorFocusRequest) { _, _ in
-            editorFocused = true
+            focusEditor()
         }
         .onDisappear {
             flushSave()
@@ -49,33 +52,53 @@ struct NoteEditorView: View {
         }
     }
 
-    // MARK: Header
+    // MARK: Editor surface
 
-    private var header: some View {
-        HStack(alignment: .center, spacing: DesignTokens.Spacing.m) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(NoteContentFormatter.displayTitle(for: note.content))
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
-                    .foregroundStyle(AuroraPalette.primaryText)
-                    .lineLimit(1)
-                HStack(spacing: DesignTokens.Spacing.s) {
-                    if isInTrash {
-                        Text("In Trash")
-                            .font(.system(size: 10.5, weight: .semibold))
-                            .foregroundStyle(.orange)
-                    } else if let sourceName = note.sourceApplicationName {
-                        Text("Captured from \(sourceName)")
-                            .font(.system(size: 10.5))
-                            .foregroundStyle(AuroraPalette.tertiaryText)
-                    }
-                    Text("Created \(NoteDateFormatting.listTimestamp(for: note.createdAt))")
-                        .font(.system(size: 10.5))
-                        .foregroundStyle(AuroraPalette.tertiaryText)
+    private var editor: some View {
+        ZStack(alignment: .topLeading) {
+            FlowingTextView(
+                text: $text,
+                onEdit: { _ in },
+                onViewReady: { textView in
+                    editorTextView = textView
                 }
-                .lineLimit(1)
-            }
-            Spacer(minLength: DesignTokens.Spacing.m)
+            )
+            .padding(.horizontal, DesignTokens.Spacing.xl + 8)
+            .padding(.top, 56)
+            .padding(.bottom, DesignTokens.Spacing.m)
+            .accessibilityIdentifier("note-editor")
+            .accessibilityLabel("Note content")
 
+            if text.isEmpty {
+                Text("Start typing…")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(AuroraPalette.tertiaryText)
+                    .allowsHitTesting(false)
+                    .padding(.leading, DesignTokens.Spacing.xl + 12)
+                    .padding(.top, 58)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            focusEditor()
+        }
+    }
+
+    /// Slim glass bar: date on the left, pin/trash on the right.
+    private var actionBar: some View {
+        HStack(spacing: DesignTokens.Spacing.m) {
+            if isInTrash {
+                Text("In Trash")
+                    .font(.system(size: 10.5, weight: .semibold))
+                    .foregroundStyle(.orange)
+            } else if let sourceName = note.sourceApplicationName {
+                Text("Captured from \(sourceName)")
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(AuroraPalette.tertiaryText)
+                    .lineLimit(1)
+            }
+            Spacer()
             if isInTrash {
                 Button("Restore") {
                     viewModel.restore(note)
@@ -85,10 +108,10 @@ struct NoteEditorView: View {
                 Button("Delete Permanently…", role: .destructive) {
                     notePendingPermanentDelete = true
                 }
+                .font(.system(size: 12, weight: .medium))
                 .buttonStyle(.plain)
                 .foregroundStyle(.red.opacity(0.9))
-                .font(.system(size: 12, weight: .medium))
-                .padding(.horizontal, 10)
+                .padding(.horizontal, 6)
             } else {
                 Button {
                     viewModel.togglePin(note)
@@ -113,35 +136,9 @@ struct NoteEditorView: View {
                 .accessibilityIdentifier("trash-note-button")
             }
         }
-        .padding(.horizontal, DesignTokens.Spacing.xl)
-        .padding(.vertical, DesignTokens.Spacing.m)
-    }
-
-    // MARK: Editor
-
-    private var editor: some View {
-        ZStack(alignment: .topLeading) {
-            TextEditor(text: $text)
-                .font(.system(size: 15.5))
-                .lineSpacing(5)
-                .foregroundStyle(AuroraPalette.primaryText.opacity(0.92))
-                .scrollContentBackground(.hidden)
-                .focused($editorFocused)
-                .padding(.horizontal, DesignTokens.Spacing.xl)
-                .padding(.vertical, DesignTokens.Spacing.l)
-                .accessibilityIdentifier("note-editor")
-                .accessibilityLabel("Note content")
-
-            if text.isEmpty {
-                Text("Note")
-                    .font(.system(size: 15.5))
-                    .foregroundStyle(AuroraPalette.tertiaryText)
-                    .allowsHitTesting(false)
-                    .padding(.leading, DesignTokens.Spacing.xl + 5)
-                    .padding(.top, DesignTokens.Spacing.l + 4)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(.leading, DesignTokens.Spacing.xl)
+        .padding(.trailing, DesignTokens.Spacing.xl)
+        .padding(.top, 12)
     }
 
     // MARK: Footer
@@ -156,6 +153,7 @@ struct NoteEditorView: View {
         }
         .padding(.horizontal, DesignTokens.Spacing.xl)
         .padding(.vertical, DesignTokens.Spacing.s + 2)
+        .background(.ultraThinMaterial)
     }
 
     private var metadataLine: String {
@@ -163,13 +161,14 @@ struct NoteEditorView: View {
         let words = text.split(whereSeparator: \.isWhitespace).count
         parts.append("\(words) word\(words == 1 ? "" : "s")")
         parts.append("\(text.count) character\(text.count == 1 ? "" : "s")")
+        parts.append("Created \(NoteDateFormatting.listTimestamp(for: note.createdAt))")
         if abs(note.updatedAt.timeIntervalSince(note.createdAt)) > 1 {
             parts.append("Edited \(NoteDateFormatting.listTimestamp(for: note.updatedAt))")
         }
         return parts.joined(separator: "   ·   ")
     }
 
-    // MARK: Autosave
+    // MARK: Autosave & focus
 
     private func scheduleSave(_ newValue: String) {
         saveTask?.cancel()
@@ -185,6 +184,14 @@ struct NoteEditorView: View {
         saveTask = nil
         if text != note.content {
             viewModel.updateContent(note, to: text)
+        }
+    }
+
+    private func focusEditor() {
+        DispatchQueue.main.async { [weak editorTextView] in
+            if let window = editorTextView?.window {
+                window.makeFirstResponder(editorTextView)
+            }
         }
     }
 }

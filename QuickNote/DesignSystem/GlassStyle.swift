@@ -26,11 +26,11 @@ struct AuroraBackdrop: View {
                 let w = proxy.size.width
                 let h = proxy.size.height
                 ZStack {
-                    glow(AuroraPalette.accentIndigo, diameter: max(w, h) * 0.9, opacity: colorScheme == .dark ? 0.30 : 0.16)
+                    glow(AuroraPalette.graphite, diameter: max(w, h) * 0.9, opacity: colorScheme == .dark ? 0.30 : 0.16)
                         .offset(x: -w * 0.28, y: -h * 0.34)
-                    glow(AuroraPalette.accentViolet, diameter: max(w, h) * 0.8, opacity: colorScheme == .dark ? 0.24 : 0.12)
+                    glow(AuroraPalette.steel, diameter: max(w, h) * 0.8, opacity: colorScheme == .dark ? 0.24 : 0.12)
                         .offset(x: w * 0.38, y: h * 0.42)
-                    glow(AuroraPalette.accentCyan, diameter: max(w, h) * 0.55, opacity: colorScheme == .dark ? 0.14 : 0.10)
+                    glow(AuroraPalette.silver, diameter: max(w, h) * 0.55, opacity: colorScheme == .dark ? 0.14 : 0.10)
                         .offset(x: w * 0.42, y: -h * 0.30)
                 }
                 .frame(width: w, height: h, alignment: .topLeading)
@@ -157,8 +157,8 @@ struct GradientProminentButtonStyle: ButtonStyle {
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(AuroraPalette.accentGradient)
-                    .shadow(color: AuroraPalette.accentIndigo.opacity(configuration.isPressed ? 0.25 : 0.45), radius: configuration.isPressed ? 6 : 12, y: 4)
+                    .fill(AuroraPalette.inkGradient)
+                    .shadow(color: AuroraPalette.graphite.opacity(configuration.isPressed ? 0.25 : 0.45), radius: configuration.isPressed ? 6 : 12, y: 4)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -181,7 +181,7 @@ struct GlassIconButtonStyle: ButtonStyle {
             .background {
                 if isActive {
                     RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .fill(AuroraPalette.accentGradientWide)
+                        .fill(AuroraPalette.inkGradient)
                 } else {
                     RoundedRectangle(cornerRadius: 9, style: .continuous)
                         .fill(Color.white.opacity(configuration.isPressed ? 0.14 : 0.07))
