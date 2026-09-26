@@ -24,4 +24,20 @@ enum DebugFlags {
     static let showQuickCapture = "-quicknote.debugShowCapture"
     /// Opens the Settings window shortly after launch (visual QA).
     static let openSettings = "-quicknote.debugOpenSettings"
+    /// Forces the onboarding view on launch regardless of stored state (UI tests).
+    static let forceOnboarding = "-quicknote.forceOnboarding"
+
+    /// Returns the value following `flag` in the launch arguments, if present.
+    static func value(for flag: String) -> String? {
+        guard let index = ProcessInfo.processInfo.arguments.firstIndex(of: flag) else { return nil }
+        let next = ProcessInfo.processInfo.arguments.index(after: index)
+        guard next < ProcessInfo.processInfo.arguments.count else { return nil }
+        return ProcessInfo.processInfo.arguments[next]
+    }
+
+    /// Seeds one note at launch with the given text if not already present
+    /// (UI tests / QA). Real typing cannot be synthesized in headless runs.
+    static let seedNote = "-quicknote.seedNote"
+    /// Uses an in-memory store so every launch starts empty (UI tests).
+    static let inMemoryStore = "-quicknote.inMemoryStore"
 }

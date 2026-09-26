@@ -7,8 +7,9 @@ struct OnboardingView: View {
 
     var body: some View {
         VStack(spacing: DesignTokens.Spacing.xl) {
-            Image("AppIcon")
+            Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
+                .aspectRatio(contentMode: .fit)
                 .frame(width: 96, height: 96)
                 .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
                 .shadow(color: .black.opacity(0.15), radius: 12, y: 4)

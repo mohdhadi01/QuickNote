@@ -37,16 +37,6 @@ struct QuickCaptureSettingsView: View {
                 }
                 .pickerStyle(.radioGroup)
                 .labelsHidden()
-                HStack {
-                    Text("Near Cursor")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text("Centered on Screen")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.leading, 0)
             }
         }
         .formStyle(.grouped)

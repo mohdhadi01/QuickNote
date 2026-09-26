@@ -4,8 +4,9 @@ import SwiftUI
 struct AboutSettingsView: View {
     var body: some View {
         VStack(spacing: DesignTokens.Spacing.l) {
-            Image("AppIcon")
+            Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
+                .aspectRatio(contentMode: .fit)
                 .frame(width: 72, height: 72)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .accessibilityHidden(true)

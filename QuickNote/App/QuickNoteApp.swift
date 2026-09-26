@@ -14,6 +14,7 @@ struct QuickNoteApp: App {
         let appCoordinator = AppCoordinator(environment: env)
         _coordinator = State(initialValue: appCoordinator)
         lifecycle.coordinator = appCoordinator
+        appCoordinator.runDebugSnapshotDriverIfNeeded(environment: env)
     }
 
     var body: some Scene {

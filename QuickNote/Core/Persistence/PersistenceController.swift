@@ -21,6 +21,15 @@ final class PersistenceController {
     /// 3. On failure again, fall back to an in-memory container so the user
     ///    can at least capture notes this session, with a visible warning.
     static func bootstrap() -> PersistenceController {
+        // Hermetic mode for UI tests / QA: fresh in-memory store each launch.
+        if DebugFlags.isEnabled(DebugFlags.inMemoryStore) {
+            do {
+                return try PersistenceController.inMemory()
+            } catch {
+                Log.persistence.error("In-memory store failed: \(String(describing: error), privacy: .public)")
+            }
+        }
+
         do {
             let container = try makeContainer(at: defaultStoreURL(), inMemory: false)
             return PersistenceController(container: container, recoveryInfo: nil)

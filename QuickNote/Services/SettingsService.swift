@@ -83,5 +83,10 @@ final class SettingsService: ObservableObject {
         self.panelPosition = PanelPosition(rawValue: defaults.string(forKey: Keys.panelPosition) ?? "") ?? .nearCursor
         self.appearanceMode = AppearanceMode(rawValue: defaults.string(forKey: Keys.appearance) ?? "") ?? .system
         self.hasCompletedOnboarding = defaults.bool(forKey: Keys.hasCompletedOnboarding)
+
+        // UI-test/QA hook: always start at onboarding when requested.
+        if DebugFlags.isEnabled(DebugFlags.forceOnboarding) {
+            self.hasCompletedOnboarding = false
+        }
     }
 }

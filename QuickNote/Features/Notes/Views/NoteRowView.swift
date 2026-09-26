@@ -38,7 +38,7 @@ struct NoteRowView: View {
                     .fill(Color.primary.opacity(0.035))
             }
         }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
     }
 

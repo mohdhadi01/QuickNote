@@ -2,16 +2,16 @@ import XCTest
 @testable import QuickNote
 
 final class KeyboardShortcutTests: XCTestCase {
-    func testDefaultShortcutIsCommandShiftSpace() {
+    func testDefaultShortcutIsControlShiftSpace() {
         let shortcut = KeyboardShortcut.default
         XCTAssertEqual(shortcut.keyCode, VirtualKey.space)
-        XCTAssertEqual(shortcut.modifiers, [.command, .shift])
+        XCTAssertEqual(shortcut.modifiers, [.control, .shift])
         XCTAssertTrue(shortcut.isValid)
     }
 
     func testDefaultShortcutDisplayString() {
         // HIG modifier order: ⌃ ⌥ ⇧ ⌘.
-        XCTAssertEqual(KeyboardShortcut.default.displayString, "⇧⌘Space")
+        XCTAssertEqual(KeyboardShortcut.default.displayString, "⌃⇧Space")
     }
 
     func testModifierDisplayOrder() {

@@ -15,12 +15,16 @@ final class AppCoordinator {
 
     private let shortcutService: ShortcutService
     private let settings: SettingsService
+    private let noteService: NoteService
     private var cancellables = Set<AnyCancellable>()
+    /// Retained while a QA snapshot sequence is in flight.
+    var snapshotDriver: DebugSnapshotDriver?
 
     init(environment: AppEnvironment) {
         self.notesViewModel = environment.notesViewModel
         self.shortcutService = environment.shortcutService
         self.settings = environment.settings
+        self.noteService = environment.noteService
         self.persistenceRecovery = environment.persistenceRecovery
         self.quickCaptureCoordinator = QuickCaptureCoordinator(
             viewModel: environment.captureViewModel,
@@ -50,6 +54,12 @@ final class AppCoordinator {
             .store(in: &cancellables)
 
         applyDebugFlags()
+
+        // UI-test/QA hook: seed one note for headless list testing.
+        if let seed = DebugFlags.value(for: DebugFlags.seedNote) {
+            noteService.seedNoteIfMissing(seed)
+        }
+
         Log.app.info("AppCoordinator started")
     }
 

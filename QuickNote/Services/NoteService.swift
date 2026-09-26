@@ -44,4 +44,13 @@ final class NoteService {
     func createManualNote() throws -> Note {
         try repository.create(content: "", sourceApplicationName: nil, sourceApplicationBundleID: nil)
     }
+
+    /// QA/UI-test hook: seeds a note once so headless runs can exercise the
+    /// list without synthesized typing.
+    func seedNoteIfMissing(_ rawText: String) {
+        guard let content = NoteContentFormatter.normalizedCaptureText(rawText) else { return }
+        let existing = (try? repository.search(content)) ?? []
+        guard existing.isEmpty else { return }
+        _ = try? capture(rawText)
+    }
 }

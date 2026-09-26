@@ -45,7 +45,10 @@ struct KeyboardShortcut: Codable, Hashable {
     var keyCode: UInt32
     var modifiers: ModifierSet
 
-    static let `default` = KeyboardShortcut(keyCode: VirtualKey.space, modifiers: [.command, .shift])
+    /// Chosen to stay clear of stock macOS bindings (⌘Space Spotlight,
+    /// ⌃Space / ⌃⌥Space input switching) and common app defaults such as
+    /// VS Code's ⌘⇧Space. Users can re-record it in Settings.
+    static let `default` = KeyboardShortcut(keyCode: VirtualKey.space, modifiers: [.control, .shift])
 
     init(keyCode: UInt32, modifiers: ModifierSet) {
         self.keyCode = keyCode
