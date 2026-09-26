@@ -54,7 +54,7 @@ export const viewport: Viewport = {
 
 // Runs before first paint so the theme never flashes.
 const themeScript = `(function(){try{var t=localStorage.getItem("qn-theme")}catch(e){}
-if(t!=="light"&&t!=="dark"&&t!=="system")t="system";
+if(t!=="light"&&t!=="dark"&&t!=="system")t="light";
 var d=t==="dark"||(t==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);
 document.documentElement.dataset.theme=d?"dark":"light";
 document.documentElement.dataset.themePref=t;})();`;
