@@ -1,0 +1,47 @@
+import AppKit
+import Foundation
+
+/// Capture-facing note operations: validation, source-app metadata, and
+/// repository persistence (spec §14, §44).
+@MainActor
+final class NoteService {
+    private let repository: NoteRepositoryProtocol
+    private let settings: SettingsService
+    private let applicationContextProvider: ApplicationContextProviding
+
+    init(
+        repository: NoteRepositoryProtocol,
+        settings: SettingsService,
+        applicationContextProvider: ApplicationContextProviding = WorkspaceApplicationContextProvider()
+    ) {
+        self.repository = repository
+        self.settings = settings
+        self.applicationContextProvider = applicationContextProvider
+    }
+
+    /// Persists a quick capture. Throws `NoteCaptureError.empty` when the
+    /// text is empty after normalization.
+    func capture(_ rawText: String, sourceApp: ApplicationContextSnapshot? = nil) throws -> Note {
+        guard let content = NoteContentFormatter.normalizedCaptureText(rawText) else {
+            throw NoteCaptureError.empty
+        }
+
+        var source = sourceApp
+        if source == nil && settings.recordSourceApp {
+            source = applicationContextProvider.frontmostApplication()
+        }
+
+        let note = try repository.create(
+            content: content,
+            sourceApplicationName: source?.applicationName,
+            sourceApplicationBundleID: source?.bundleIdentifier
+        )
+        Log.capture.info("Saved quick capture")
+        return note
+    }
+
+    /// Creates an empty note from the main window's "+" action.
+    func createManualNote() throws -> Note {
+        try repository.create(content: "", sourceApplicationName: nil, sourceApplicationBundleID: nil)
+    }
+}

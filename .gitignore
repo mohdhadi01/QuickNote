@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# Xcode
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.playground
+
+# Swift Package Manager
+.build/
+Packages/
+
+# CocoaPods (not used, defensive)
+Pods/
+
+# Misc
+*.orig
+*.rej
