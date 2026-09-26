@@ -317,9 +317,10 @@ export default function Home() {
             <ol className="install-steps">
               <li><strong>Open the DMG</strong> and drag QuickNote to your Applications folder.</li>
               <li>
-                <strong>First launch:</strong> QuickNote isn&apos;t notarized yet, so macOS may
-                pause on Gatekeeper. Control-click the app and choose <em>Open</em> once, or use
-                System Settings → Privacy &amp; Security → <em>Open Anyway</em>.
+                <strong>First launch:</strong> macOS shows a one-time warning
+                (&ldquo;Apple could not verify QuickNote&rdquo;) because the build isn&apos;t
+                notarized yet. Click <em>Done</em>, then open System Settings → Privacy &amp;
+                Security → <em>Open Anyway</em> → <em>Open</em>.
               </li>
               <li><strong>That&apos;s it.</strong> No permissions to grant — set your shortcut in Settings and start capturing.</li>
             </ol>
