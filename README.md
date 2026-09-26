@@ -23,6 +23,10 @@ Built with Swift + SwiftUI + AppKit + SwiftData, targeting macOS 26+.
 
 ## Features
 
+- **Multi-select**: ⌘-click toggles, ⇧-click selects a range, ⌘A selects all; batch Pin/Unpin/Copy/Merge/Trash panel; Esc collapses to one note.
+- **Drag & drop**: drag rows out as text; drag notes onto sidebar sections to pin/trash/restore them; drop text or .txt files into the list to create notes.
+- **First-line-as-heading editor**: quick captures have no title field — the first line renders as a heading visually only; stored content is never modified.
+
 - Quick capture panel: Liquid Glass (`NSGlassEffectView`), non-activating
   NSPanel that works over any app, Space, and full-screen app; positioned near
   the cursor (or centered on screen — a setting); grows with content.
@@ -34,7 +38,7 @@ Built with Swift + SwiftUI + AppKit + SwiftData, targeting macOS 26+.
 - Settings: Launch at Login (SMAppService), shortcut recorder, panel position,
   Record Source Application (**off by default** — stores only app name +
   bundle ID), appearance (system/light/dark).
-- Menu bar item: New Quick Note, Open Notes, Search Notes, Settings, Quit.
+- Menu bar item: New Quick Note, New Note, Open Notes, Search Notes, **Launch at Login toggle**, Settings, Quit.
 - Onboarding is a single card on first launch — no accounts, no permissions.
 - Persistence via SwiftData with graceful recovery: an unreadable store is
   quarantined (never deleted) and a fresh one is created; the app surfaces a

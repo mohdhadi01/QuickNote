@@ -169,6 +169,8 @@ private struct SectionRow: View {
         }
         .padding(.horizontal, 9)
         .padding(.vertical, 7)
+        // Fill the sidebar width so the whole row is clickable, not just the text.
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var rowBackground: some View {
