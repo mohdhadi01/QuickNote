@@ -24,6 +24,10 @@ struct QuickNoteApp: App {
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentMinSize)
+        // Menu-bar-first app: without this, macOS 26 never realizes the
+        // WindowGroup window at launch (the scene stays dormant until
+        // openWindow is triggered from the menu bar).
+        .defaultLaunchBehavior(.presented)
         .defaultSize(
             width: DesignTokens.MainWindow.defaultWidth,
             height: DesignTokens.MainWindow.defaultHeight

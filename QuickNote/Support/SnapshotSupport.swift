@@ -38,7 +38,9 @@ enum DebugSnapshot {
         )
         window.appearance = appearance
         window.backgroundColor = .windowBackgroundColor
-        window.contentView = NSHostingView(rootView: view)
+        // Opaque, appearance-tracking backdrop: glass materials composite
+        // against black when rendered offscreen without one.
+        window.contentView = NSHostingView(rootView: view.background(Color(nsColor: .windowBackgroundColor)))
         window.orderBack(nil)
         RunLoop.main.run(until: Date().addingTimeInterval(0.15))
         capture(window: window, name: name)
@@ -145,11 +147,16 @@ final class DebugSnapshotDriver {
 
     func run() {
         guard DebugSnapshot.directoryPath != nil else { return }
+        // Snapshot determinism: never show onboarding, even in a fresh container.
+        if !environment.settings.hasCompletedOnboarding {
+            environment.settings.hasCompletedOnboarding = true
+        }
         Task { [weak self] in
             try? await Task.sleep(nanoseconds: 1_500_000_000)
             await MainActor.run {
                 NSApp.appearance = NSAppearance(named: .aqua)
                 self?.appearance = NSAppearance(named: .aqua)
+                self?.waitForMainWindow(timeout: 10)
                 self?.captureAll(suffix: "light")
             }
             try? await Task.sleep(nanoseconds: 800_000_000)
@@ -158,6 +165,7 @@ final class DebugSnapshotDriver {
             await MainActor.run { self?.captureAll(suffix: "dark") }
             try? await Task.sleep(nanoseconds: 500_000_000)
             await MainActor.run {
+                self?.teardownFallbackMainWindow()
                 NSApp.appearance = nil
                 NSApp.terminate(nil)
             }
@@ -165,6 +173,66 @@ final class DebugSnapshotDriver {
     }
 
     private var appearance: NSAppearance?
+    /// Deterministic stand-in for the SwiftUI main scene window, used when
+    /// macOS never realizes the WindowGroup at launch (observed on macOS 26
+    /// with a MenuBarExtra scene present).
+    private var fallbackMainWindow: NSWindow?
+
+    /// A visible, ordinary (non-panel) app window large enough to be the
+    /// notes workspace.
+    private static func visibleMainWindow() -> NSWindow? {
+        NSApp.windows.first { window in
+            !(window is NSPanel)
+                && window.isVisible
+                && window.contentView != nil
+                && window.frame.width > 800
+        }
+    }
+
+    /// Waits for the SwiftUI main scene window; if none appears within the
+    /// timeout, hosts the notes workspace in a real window ourselves so the
+    /// capture sequence can never miss its subject.
+    private func waitForMainWindow(timeout: TimeInterval) {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if Self.visibleMainWindow() != nil { return }
+            RunLoop.main.run(until: Date().addingTimeInterval(0.25))
+        }
+        Log.window.info("Snapshot: no main window appeared; hosting fallback")
+        ensureFallbackMainWindow()
+    }
+
+    private func ensureFallbackMainWindow() {
+        guard fallbackMainWindow == nil else { return }
+        let width = DesignTokens.MainWindow.defaultWidth
+        let height = DesignTokens.MainWindow.defaultHeight
+        let window = NSWindow(
+            contentRect: NSRect(x: 60, y: 120, width: width, height: height),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.identifier = NSUserInterfaceItemIdentifier("main-AppWindow-snapshot")
+        window.appearance = appearance
+        window.contentView = NSHostingView(
+            rootView: MainNotesView(
+                viewModel: coordinator.notesViewModel,
+                persistenceRecovery: coordinator.persistenceRecovery
+            )
+            .quickNoteEnvironment(environment, coordinator: coordinator)
+        )
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        RunLoop.main.run(until: Date().addingTimeInterval(0.4))
+        fallbackMainWindow = window
+    }
+
+    private func teardownFallbackMainWindow() {
+        fallbackMainWindow?.orderOut(nil)
+        fallbackMainWindow = nil
+    }
 
     private func switchToDark() {
         let dark = NSAppearance(named: .darkAqua)
@@ -173,8 +241,13 @@ final class DebugSnapshotDriver {
     }
 
     private func captureAll(suffix: String) {
-        // 1. Main window (a regular NSWindow, not the capture panel).
-        if let mainWindow = NSApp.windows.first(where: { !$0.isKind(of: NSPanel.self) && $0.isVisible && $0.contentView != nil }) {
+        // 1. Main window (the SwiftUI main scene, or the deterministic
+        //    fallback hosting the same workspace).
+        if let mainWindow = NSApp.windows.first(where: {
+            $0.isVisible
+                && $0.contentView != nil
+                && ($0.identifier?.rawValue.hasPrefix("main-AppWindow") ?? false)
+        }) ?? Self.visibleMainWindow() {
             mainWindow.appearance = appearance
             DebugSnapshot.capture(window: mainWindow, name: "main-\(suffix)")
         }
@@ -224,31 +297,37 @@ final class DebugSnapshotDriver {
         )
 
         // 3. Quick capture panel content, hosted in a plain window (the
-        // NSGlassEffectView material itself cannot be captured offscreen).
+        //    NSGlassEffectView material itself cannot be captured offscreen,
+        //    and the live panel renders flipped via layer capture).
+        //    Empty state: placeholder only, no typed text.
+        let panelSize = CGSize(
+            width: DesignTokens.CapturePanel.initialWidth,
+            height: DesignTokens.CapturePanel.initialHeight
+        )
         DebugSnapshot.captureHosted(
             QuickCaptureView(viewModel: environment.captureViewModel, flags: environment.flags, onTextViewReady: { _ in })
                 .background(Color(nsColor: .windowBackgroundColor))
-                .frame(width: DesignTokens.CapturePanel.initialWidth, height: DesignTokens.CapturePanel.initialHeight),
-            size: CGSize(width: DesignTokens.CapturePanel.initialWidth, height: DesignTokens.CapturePanel.initialHeight),
-            name: "capture-layout-\(suffix)",
+                .frame(width: panelSize.width, height: panelSize.height),
+            size: panelSize,
+            name: "capture-empty-\(suffix)",
             appearance: appearance
         )
 
-        // 4. Live capture panel: type text and capture (best-effort pixels).
-        environment.captureViewModel.text = "Remember to optimize the React Native animation.\nCheck frame timing on device tomorrow."
-        coordinator.quickCaptureCoordinator.present()
-        Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 900_000_000)
-            await MainActor.run { self?.capturePanel(suffix: suffix) }
-        }
-    }
-
-    private func capturePanel(suffix: String) {
-        if let panel = NSApp.windows.first(where: { $0 is NSPanel && $0.isVisible }) {
-            panel.appearance = appearance
-            DebugSnapshot.capturePanelContent(window: panel, name: "capture-typed-\(suffix)")
-        }
-        coordinator.quickCaptureCoordinator.requestCancel()
+        // 4. Typed state: the first curated demo note, as if just typed into
+        //    the panel. Hosted like the empty state for faithful pixels; the
+        //    height mimics the panel growing for multiline input.
+        environment.captureViewModel.text = DemoContent.notes[0]
+        let typedSize = CGSize(width: panelSize.width, height: 210)
+        DebugSnapshot.captureHosted(
+            QuickCaptureView(viewModel: environment.captureViewModel, flags: environment.flags, onTextViewReady: { _ in })
+                .background(Color(nsColor: .windowBackgroundColor))
+                .frame(width: typedSize.width, height: typedSize.height),
+            size: typedSize,
+            name: "capture-typed-\(suffix)",
+            appearance: appearance
+        )
+        environment.captureViewModel.text = ""
+        environment.captureViewModel.contentHeight = 0
     }
 }
 
