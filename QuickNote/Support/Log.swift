@@ -40,4 +40,7 @@ enum DebugFlags {
     static let seedNote = "-quicknote.seedNote"
     /// Uses an in-memory store so every launch starts empty (UI tests).
     static let inMemoryStore = "-quicknote.inMemoryStore"
+    /// Seeds a curated set of sample notes (marketing screenshots — never
+    /// real user data).
+    static let demoData = "-quicknote.demoData"
 }

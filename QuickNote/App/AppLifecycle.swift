@@ -18,6 +18,8 @@ final class AppLifecycle: NSObject, NSApplicationDelegate {
     /// login. Login-item launches should stay silent (hotkey + menu bar only);
     /// Dock clicks reopen the window via standard reopen handling.
     func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool {
+        // Snapshot/QA runs must always present the main window.
+        if DebugSnapshot.directoryPath != nil { return true }
         guard isLaunchedAtLogin() else { return true }
         Log.app.info("Suppressing main window for login launch")
         return false

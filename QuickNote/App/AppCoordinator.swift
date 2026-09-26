@@ -60,6 +60,15 @@ final class AppCoordinator {
             noteService.seedNoteIfMissing(seed)
         }
 
+        // Marketing-screenshot hook: curated sample notes only. Seeded in
+        // reverse so the hero note ("Launch the portfolio site") — created
+        // last and therefore newest — sorts to the top of the list.
+        if DebugFlags.isEnabled(DebugFlags.demoData) {
+            for text in DemoContent.notes.reversed() {
+                noteService.seedNoteIfMissing(text)
+            }
+        }
+
         Log.app.info("AppCoordinator started")
     }
 
