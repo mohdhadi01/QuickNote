@@ -171,6 +171,9 @@ private struct SectionRow: View {
         .padding(.vertical, 7)
         // Fill the sidebar width so the whole row is clickable, not just the text.
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Declared inside the label so the Spacer region is hit-testable too —
+        // without this, clicks in the empty middle of the row fall through.
+        .contentShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
     }
 
     private var rowBackground: some View {
