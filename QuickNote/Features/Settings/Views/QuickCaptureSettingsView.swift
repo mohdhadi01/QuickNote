@@ -6,40 +6,56 @@ struct QuickCaptureSettingsView: View {
     @Environment(ShortcutService.self) private var shortcutService
 
     var body: some View {
-        Form {
-            Section("Quick Capture Shortcut") {
-                HStack {
-                    ShortcutRecorderView(shortcut: recorderBinding)
-                    Spacer()
-                    if shortcutService.isRegistered {
-                        Label("Active", systemImage: "checkmark.circle.fill")
-                            .font(.footnote)
-                            .foregroundStyle(.green)
-                    } else if let error = shortcutService.registrationError {
-                        Label("Unavailable", systemImage: "exclamationmark.triangle.fill")
-                            .font(.footnote)
-                            .foregroundStyle(.orange)
-                            .help(error.userFacingMessage)
+        ScrollView {
+            VStack(spacing: DesignTokens.Spacing.l) {
+                SettingsCard(title: "Quick Capture Shortcut") {
+                    HStack(spacing: DesignTokens.Spacing.l) {
+                        ShortcutRecorderView(shortcut: recorderBinding)
+                        Spacer()
+                        statusBadge
+                    }
+                    if let error = shortcutService.registrationError {
+                        Text(error.userFacingMessage)
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(.orange.opacity(0.95))
                     }
                 }
-                if let error = shortcutService.registrationError {
-                    Text(error.userFacingMessage)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-            }
 
-            Section("Panel Position") {
-                Picker("Position", selection: $settings.panelPosition) {
-                    ForEach(SettingsService.PanelPosition.allCases) { position in
-                        Text(position.title).tag(position)
+                SettingsCard(title: "Panel Position") {
+                    Picker("Position", selection: $settings.panelPosition) {
+                        ForEach(SettingsService.PanelPosition.allCases) { position in
+                            Text(position.title).tag(position)
+                        }
                     }
+                    .pickerStyle(.radioGroup)
+                    .labelsHidden()
                 }
-                .pickerStyle(.radioGroup)
-                .labelsHidden()
             }
+            .padding(DesignTokens.Spacing.l)
         }
-        .formStyle(.grouped)
+    }
+
+    @ViewBuilder
+    private var statusBadge: some View {
+        if shortcutService.isRegistered {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(AuroraPalette.accentCyan)
+                    .frame(width: 7, height: 7)
+                    .shadow(color: AuroraPalette.accentCyan.opacity(0.8), radius: 4)
+                Text("Active")
+                    .font(.system(size: 11.5, weight: .semibold))
+                    .foregroundStyle(AuroraPalette.secondaryText)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Capsule().fill(Color.white.opacity(0.06)))
+        } else if let error = shortcutService.registrationError {
+            Label("Unavailable", systemImage: "exclamationmark.triangle.fill")
+                .font(.system(size: 11.5, weight: .semibold))
+                .foregroundStyle(.orange.opacity(0.95))
+                .help(error.userFacingMessage)
+        }
     }
 
     /// Applies the shortcut through ShortcutService so it re-registers.

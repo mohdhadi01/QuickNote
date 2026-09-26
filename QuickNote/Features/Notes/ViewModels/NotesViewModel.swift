@@ -17,11 +17,16 @@ final class NotesViewModel: ObservableObject {
         }
     }
     @Published private(set) var notes: [Note] = []
+    @Published private(set) var counts: [NoteFilter: Int] = [:]
     @Published var selectedNoteID: UUID? {
         didSet {
             if oldValue != selectedNoteID { syncSelectionToNotes() }
         }
     }
+    /// Incremented to move keyboard focus into the editor.
+    @Published var editorFocusRequest = 0
+    /// Incremented to move keyboard focus into the search field.
+    @Published var searchFocusRequest = 0
 
     var selectedNote: Note? {
         notes.first { $0.id == selectedNoteID }
@@ -62,10 +67,37 @@ final class NotesViewModel: ObservableObject {
                 fetched = try repository.search(searchText)
             }
             notes = fetched
+            computeCounts()
             syncSelectionToNotes()
         } catch {
             Log.persistence.error("Fetch failed: \(String(describing: error), privacy: .public)")
         }
+    }
+
+    /// Sidebar badges, computed from one lightweight pass over all notes.
+    private func computeCounts() {
+        let all = (try? repository.fetchNotes(in: .all)) ?? []
+        let trash = (try? repository.fetchNotes(in: .trash)) ?? []
+        let todayStart = NoteFilter.todayRange().start
+        counts = [
+            .all: all.count,
+            .inbox: all.filter { !$0.isPinned }.count,
+            .pinned: all.filter(\.isPinned).count,
+            .today: all.filter { $0.createdAt >= todayStart }.count,
+            .trash: trash.count,
+        ]
+    }
+
+    /// Arrow-key navigation in the list.
+    func moveSelection(_ delta: Int) {
+        guard !notes.isEmpty else { return }
+        let currentIndex = notes.firstIndex { $0.id == selectedNoteID } ?? (delta > 0 ? -1 : 0)
+        let nextIndex = min(max(currentIndex + delta, 0), notes.count - 1)
+        selectedNoteID = notes[nextIndex].id
+    }
+
+    func clearSearch() {
+        searchText = ""
     }
 
     /// Debounced search refresh (spec §22: no work per keystroke without a
@@ -120,6 +152,7 @@ final class NotesViewModel: ObservableObject {
         do {
             let note = try noteService?.createManualNote()
             selectedNoteID = note?.id
+            editorFocusRequest += 1
         } catch {
             Log.persistence.error("Could not create note: \(String(describing: error), privacy: .public)")
         }

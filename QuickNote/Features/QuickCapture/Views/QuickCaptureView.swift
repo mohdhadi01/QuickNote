@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// The quick capture surface content (spec §7, §10, §12, §13).
+/// The quick capture surface content (spec §7, §10, §12, §13): aurora glass
+/// with a gradient rim, focused input, and keycap hints.
 struct QuickCaptureView: View {
     @ObservedObject var viewModel: QuickCaptureViewModel
     @ObservedObject var flags: AccessibilityEnvironmentFlags
@@ -14,6 +15,7 @@ struct QuickCaptureView: View {
         .padding(.horizontal, DesignTokens.CapturePanel.horizontalPadding)
         .padding(.vertical, DesignTokens.CapturePanel.verticalPadding)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .overlay(rim)
         .background {
             if flags.reduceTransparency {
                 // Reduce Transparency: solid backdrop instead of glass.
@@ -21,6 +23,25 @@ struct QuickCaptureView: View {
                     .fill(Color(nsColor: .windowBackgroundColor))
             }
         }
+    }
+
+    /// Gradient rim + top sheen: light bending around the glass edge.
+    private var rim: some View {
+        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.capture, style: .continuous)
+            .strokeBorder(
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.38),
+                        AuroraPalette.accentViolet.opacity(0.30),
+                        AuroraPalette.accentCyan.opacity(0.22),
+                        Color.white.opacity(0.10),
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                lineWidth: 1
+            )
+            .allowsHitTesting(false)
     }
 
     private var editorArea: some View {
@@ -48,13 +69,17 @@ struct QuickCaptureView: View {
             .accessibilityHint("Type a note, then press Return to save it")
 
             if viewModel.text.isEmpty {
-                Text("Capture a thought…")
-                    .font(Typography.capturePlaceholder)
-                    .foregroundStyle(.secondary)
-                    .opacity(0.7)
-                    .allowsHitTesting(false)
-                    .padding(.leading, 4)
-                    .accessibilityHidden(true)
+                HStack(spacing: 6) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(AuroraPalette.accentGradient.opacity(0.85))
+                    Text("Capture a thought…")
+                        .font(Typography.capturePlaceholder)
+                        .foregroundStyle(AuroraPalette.tertiaryText)
+                }
+                .allowsHitTesting(false)
+                .padding(.leading, 4)
+                .accessibilityHidden(true)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -64,7 +89,7 @@ struct QuickCaptureView: View {
         HStack(spacing: DesignTokens.Spacing.m) {
             if let error = viewModel.saveError {
                 Text(error)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(.red.opacity(0.95))
                 Button("Retry") {
                     viewModel.clearSaveError()
                     viewModel.onSaveRequested?()
@@ -75,22 +100,24 @@ struct QuickCaptureView: View {
                 ProgressView()
                     .controlSize(.small)
             } else {
-                keyHint("↩", "Save")
-                keyHint("⇧↩", "New Line")
-                keyHint("esc", "Dismiss")
+                keyHint(keys: ["⏎"], label: "Save")
+                keyHint(keys: ["⇧", "⏎"], label: "New Line")
+                keyHint(keys: ["esc"], label: "Dismiss")
             }
             Spacer()
         }
         .font(Typography.captureHint)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(AuroraPalette.secondaryText)
         .lineLimit(1)
         .frame(height: DesignTokens.CapturePanel.footerHeight)
         .accessibilityElement(children: .combine)
     }
 
-    private func keyHint(_ key: String, _ label: String) -> some View {
-        HStack(spacing: 3) {
-            Text(key)
+    private func keyHint(keys: [String], label: String) -> some View {
+        HStack(spacing: 4) {
+            HStack(spacing: 2) {
+                ForEach(keys, id: \.self) { GlassKeycap(label: $0) }
+            }
             Text(label)
         }
     }

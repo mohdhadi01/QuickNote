@@ -6,6 +6,10 @@ import Foundation
 /// (spec §11, §31): Reduce Motion and Reduce Transparency.
 @MainActor
 final class AccessibilityEnvironmentFlags: ObservableObject {
+    /// Shared instance used by QA snapshot hosting where the environment
+    /// chain is assembled manually.
+    static let shared = AccessibilityEnvironmentFlags()
+
     @Published private(set) var reduceMotion: Bool = false
     @Published private(set) var reduceTransparency: Bool = false
 

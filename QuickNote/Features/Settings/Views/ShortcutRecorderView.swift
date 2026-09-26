@@ -77,16 +77,21 @@ struct ShortcutRecorderView: View {
     private var recorderChip: some View {
         ZStack {
             RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.s)
-                .fill(isRecording ? Color.accentColor.opacity(0.12) : Color.primary.opacity(0.06))
+                .fill(
+                    isRecording
+                        ? AnyShapeStyle(AuroraPalette.accentGradient.opacity(0.22))
+                        : AnyShapeStyle(Color.white.opacity(0.06))
+                )
             RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.s)
                 .strokeBorder(
-                    isRecording ? Color.accentColor.opacity(0.6) : Color.primary.opacity(0.12),
+                    isRecording
+                        ? AnyShapeStyle(AuroraPalette.accentGradient.opacity(0.8))
+                        : AnyShapeStyle(AuroraPalette.glassEdge),
                     lineWidth: 1
                 )
             Text(isRecording ? "Type a shortcut" : shortcut.displayString)
                 .font(Typography.shortcutGlyph)
-                .foregroundStyle(isRecording ? Color.accentColor : .primary)
-                .monospaced()
+                .foregroundStyle(AuroraPalette.primaryText)
         }
         .frame(width: 150, height: 34)
         .contentShape(Rectangle())

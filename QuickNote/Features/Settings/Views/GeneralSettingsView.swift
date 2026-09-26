@@ -6,19 +6,25 @@ struct GeneralSettingsView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        Form {
-            Section {
-                Toggle("Launch at Login", isOn: launchBinding)
-            } footer: {
-                Text("QuickNote starts when you log in so the capture shortcut is always available.")
+        ScrollView {
+            VStack(spacing: DesignTokens.Spacing.l) {
+                SettingsCard(title: "Startup") {
+                    Toggle("Launch at Login", isOn: launchBinding)
+                        .toggleStyle(.switch)
+                        .font(.system(size: 13, weight: .medium))
+                        .accessibilityIdentifier("launch-at-login-toggle")
+                    Text("QuickNote starts when you log in so the capture shortcut is always available.")
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(AuroraPalette.tertiaryText)
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .font(.system(size: 11.5, weight: .medium))
+                            .foregroundStyle(.red.opacity(0.95))
+                    }
+                }
             }
-            if let errorMessage {
-                Text(errorMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.red)
-            }
+            .padding(DesignTokens.Spacing.l)
         }
-        .formStyle(.grouped)
         .onAppear { loginItem.refreshStatus() }
     }
 

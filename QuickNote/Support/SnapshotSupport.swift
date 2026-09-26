@@ -216,6 +216,7 @@ final class DebugSnapshotDriver {
         DebugSnapshot.captureHosted(
             OnboardingView()
                 .environmentObject(environment.settings)
+                .environmentObject(AccessibilityEnvironmentFlags.shared)
                 .background(Color(nsColor: .windowBackgroundColor)),
             size: CGSize(width: 560, height: 460),
             name: "onboarding-\(suffix)",

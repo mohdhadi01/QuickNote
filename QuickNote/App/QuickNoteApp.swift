@@ -22,11 +22,12 @@ struct QuickNoteApp: App {
             AppRootView()
                 .quickNoteEnvironment(environment, coordinator: coordinator)
         }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentMinSize)
         .defaultSize(
             width: DesignTokens.MainWindow.defaultWidth,
             height: DesignTokens.MainWindow.defaultHeight
         )
-        .windowResizability(.contentMinSize)
 
         Settings {
             SettingsView()
