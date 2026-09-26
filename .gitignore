@@ -19,3 +19,6 @@ Pods/
 # Misc
 *.orig
 *.rej
+
+# Distribution artifacts (built via Scripts/MakeDMG.sh)
+dist/*.dmg
