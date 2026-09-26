@@ -15,7 +15,7 @@ export default function Home() {
               Built for macOS 26 · Liquid&nbsp;Glass native
             </p>
             <h1 className="reveal" style={d("0.05s")}>
-              <span className="grad-text">Capture a thought</span>
+              Capture a thought
               <br />
               <span className="accent">before it disappears.</span>
             </h1>
@@ -155,7 +155,7 @@ export default function Home() {
         <div className="section-inner">
           <p className="eyebrow reveal">Features</p>
           <h2 className="reveal" style={d("0.05s")}>
-            Everything you need. <span className="grad-text">Nothing you don&apos;t.</span>
+            Everything you need. Nothing you don&apos;t.
           </h2>
           <p className="section-lede reveal" style={d("0.1s")}>
             Power when you want it, silence when you don&apos;t. Every feature is built to keep
