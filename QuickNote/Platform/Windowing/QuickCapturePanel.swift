@@ -29,7 +29,10 @@ final class QuickCapturePanel: NSPanel {
 
         isOpaque = false
         backgroundColor = .clear
-        hasShadow = true
+        // The system shadow follows the rectangular window bounds (it cannot
+        // read the server-side glass shape) and shows as a black box — the
+        // Liquid Glass material carries its own depth instead.
+        hasShadow = false
         hidesOnDeactivate = false
         isMovableByWindowBackground = false
         becomesKeyOnlyIfNeeded = false
