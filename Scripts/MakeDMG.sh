@@ -141,8 +141,14 @@ for _ in 1 2 3 4; do
     hdiutil detach "/Volumes/$VOL_NAME" -force -quiet >/dev/null 2>&1 || true
 done
 [ "$DETACHED" -eq 1 ] || { echo "   ⚠︎ could not detach /Volumes/$VOL_NAME"; exit 1; }
+sleep 3   # let diskimages-helper release the file before convert
 rm -f "$DMG"
-hdiutil convert "$RW_DMG" -format UDZO -o "$DMG" >/dev/null
+CONVERTED=0
+for _ in 1 2 3; do
+    if hdiutil convert "$RW_DMG" -format UDZO -o "$DMG" >/dev/null 2>&1; then CONVERTED=1; break; fi
+    sleep 3
+done
+[ "$CONVERTED" -eq 1 ] || { echo "   ⚠︎ could not compress the image"; exit 1; }
 rm -f "$RW_DMG"
 
 NOTARIZE_ARGS=()

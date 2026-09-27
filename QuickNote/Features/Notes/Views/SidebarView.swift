@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 /// for organizing notes (drag a note onto a section to move it).
 struct SidebarView: View {
     @ObservedObject var viewModel: NotesViewModel
+    @Environment(\.openSettings) private var openSettings
 
     private let columns: [(filter: NoteFilter, shortcut: String)] = [
         (.inbox, "1"), (.today, "2"), (.all, "3"), (.pinned, "4"), (.trash, "5"),
@@ -81,13 +82,24 @@ struct SidebarView: View {
 
     private var footer: some View {
         HStack(spacing: DesignTokens.Spacing.s) {
-            GlassKeycap(label: "⌘1–5")
-            Text("sections")
-                .font(.system(size: 10.5))
-                .foregroundStyle(AuroraPalette.tertiaryText)
+            HStack(spacing: DesignTokens.Spacing.s) {
+                GlassKeycap(label: "⌘1–5")
+                Text("sections")
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(AuroraPalette.tertiaryText)
+            }
+            .accessibilityHidden(true)
             Spacer()
+            Button {
+                openSettings()
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 12, weight: .medium))
+            }
+            .buttonStyle(GlassIconButtonStyle())
+            .help("Open Settings")
+            .accessibilityLabel("Settings")
         }
-        .accessibilityHidden(true)
     }
 
     // MARK: Drag & drop organizing
