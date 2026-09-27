@@ -51,6 +51,8 @@ final class NoteService {
         guard let content = NoteContentFormatter.normalizedCaptureText(rawText) else { return }
         let existing = (try? repository.search(content)) ?? []
         guard existing.isEmpty else { return }
-        _ = try? capture(rawText)
+        // Seeded demo notes never carry a source app; the editor header
+        // would otherwise show whatever app happened to launch the run.
+        try? repository.create(content: content, sourceApplicationName: nil, sourceApplicationBundleID: nil)
     }
 }

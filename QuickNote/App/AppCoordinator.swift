@@ -88,7 +88,7 @@ final class AppCoordinator {
         let alert = NSAlert()
         alert.alertStyle = .warning
         alert.messageText = "Quick Capture shortcut is unavailable."
-        alert.informativeText = "\(settings.shortcut.displayString) — \(error.userFacingMessage)"
+        alert.informativeText = "\(settings.shortcut.displayString): \(error.userFacingMessage)"
         alert.addButton(withTitle: "Open Settings…")
         alert.addButton(withTitle: "OK")
         NSApp.activate(ignoringOtherApps: true)

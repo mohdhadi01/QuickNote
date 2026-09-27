@@ -214,7 +214,7 @@ final class NotesViewModel: ObservableObject {
         let combined = selected
             .sorted { $0.createdAt < $1.createdAt }
             .map(\.content)
-            .joined(separator: "\n\n—\n\n")
+            .joined(separator: "\n\n· · ·\n\n")
         do {
             let merged = try noteService?.createManualNote()
             try repository.updateContent(merged ?? selected[0], to: combined)

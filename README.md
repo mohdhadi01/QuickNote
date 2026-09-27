@@ -6,7 +6,7 @@
 
 **Capture a thought before it disappears.**
 
-A native macOS instant-notes utility — press one shortcut from anywhere,
+A native macOS instant-notes utility, press one shortcut from anywhere,
 type, hit Return. The note is saved on your Mac and the panel vanishes.
 
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-black)](https://github.com/mohdhadi01/QuickNote)
@@ -17,11 +17,11 @@ type, hit Return. The note is saved on your Mac and the panel vanishes.
 
 </div>
 
-![QuickNote main window in dark mode — sidebar, note list, and editor](docs/main-dark.png)
+![QuickNote main window in dark mode, sidebar, note list, and editor](docs/main-dark.png)
 
 QuickNote is built for the moment an idea shows up mid-task: no window hunting,
 no new-note button, no title field, no account. One keystroke, the thought,
-done — and since the notes live in a local SwiftData database, nothing ever
+done, and since the notes live in a local SwiftData database, nothing ever
 leaves your Mac.
 
 <p align="center"><a href="https://github.com/mohdhadi01/QuickNote/releases/latest/download/QuickNote-1.0.dmg"><img src="https://img.shields.io/badge/⬇_Download-QuickNote_1.0_.dmg-4a56d6?style=for-the-badge" alt="Download QuickNote 1.0 DMG"></a></p>
@@ -36,18 +36,18 @@ leaves your Mac.
 | --- | --- |
 | ![Main window, light](docs/main-light.png) | ![Capture panel with a typed note](docs/capture-typed-light.png) |
 
-The full experience — shortcut demo, feature tour, blog — lives on the
+The full experience, shortcut demo, feature tour, blog, lives on the
 marketing site: **[QuickNote-Website](https://github.com/mohdhadi01/QuickNote-Website)**.
 
 ## Features
 
-- **⌃⇧Space from anywhere** — a Liquid Glass panel (non-activating `NSPanel`) works over any app, Space, and full-screen apps; no Accessibility permission, ever (the hotkey uses Carbon `RegisterEventHotKey`).
-- **First line becomes the heading** — quick captures have no title field; the first line renders as a heading visually, stored text is never modified.
-- **Keyboard first** — ↑/↓ walk the list, ⌘1–5 switch sections, ⌘F searches, Return opens, Esc is always contextual.
-- **Multi-select & merge** — ⌘-click toggles, ⇧-click ranges, ⌘A selects all; batch Pin/Copy/Merge/Trash.
-- **Drag & drop** — drag notes onto sidebar sections to organize; drop text or `.txt` files to create notes instantly.
-- **Pin, search, trash** — pinned shortlist, debounced global search, restore-or-purge Trash.
-- **Quietly native** — launch at login (silent), menu bar companion, light/dark that follows the system, Reduce Motion/Transparency aware.
+- **⌃⇧Space from anywhere**, a Liquid Glass panel (non-activating `NSPanel`) works over any app, Space, and full-screen apps; no Accessibility permission, ever (the hotkey uses Carbon `RegisterEventHotKey`).
+- **First line becomes the heading**, quick captures have no title field; the first line renders as a heading visually, stored text is never modified.
+- **Keyboard first**, ↑/↓ walk the list, ⌘1–5 switch sections, ⌘F searches, Return opens, Esc is always contextual.
+- **Multi-select & merge**, ⌘-click toggles, ⇧-click ranges, ⌘A selects all; batch Pin/Copy/Merge/Trash.
+- **Drag & drop**, drag notes onto sidebar sections to organize; drop text or `.txt` files to create notes instantly.
+- **Pin, search, trash**, pinned shortlist, debounced global search, restore-or-purge Trash.
+- **Quietly native**, launch at login (silent), menu bar companion, light/dark that follows the system, Reduce Motion/Transparency aware.
 
 <div align="center">
 
@@ -57,7 +57,7 @@ marketing site: **[QuickNote-Website](https://github.com/mohdhadi01/QuickNote-We
 
 ## Download
 
-Grab the latest DMG from [**Releases**](https://github.com/mohdhadi01/QuickNote/releases/latest) —
+Grab the latest DMG from [**Releases**](https://github.com/mohdhadi01/QuickNote/releases/latest),
 macOS 26+, Apple silicon & Intel, ~3 MB, free. Drag QuickNote to Applications
 and you're done. The step-by-step first-launch instructions are in the release
 notes and inside the DMG.
@@ -74,7 +74,7 @@ xcodebuild -project QuickNote.xcodeproj -scheme QuickNote -configuration Release
 ```
 
 The app is signed with App Sandbox; no special permissions are requested
-(no Accessibility permission needed — the hotkey uses Carbon
+(no Accessibility permission needed, the hotkey uses Carbon
 `RegisterEventHotKey`).
 
 ### Packaging
@@ -114,7 +114,7 @@ events. Real typing should be verified manually.
 | `-quicknote.debugShowCapture` | Opens the capture panel 1 s after launch |
 | `-quicknote.debugOpenSettings` | Opens Settings 1 s after launch |
 | `-quicknote.debugSnapshot` | Renders light+dark PNGs of all windows to the app container's `tmp/quicknote-snapshots/`, then quits |
-| `-quicknote.demoData` | Seeds the curated sample notes (used for screenshots — never real user data) |
+| `-quicknote.demoData` | Seeds the curated sample notes (used for screenshots, never real user data) |
 | `-quicknote.forceOnboarding` | Always starts at onboarding |
 | `-quicknote.seedNote <text>` | Seeds one note at launch |
 | `-quicknote.inMemoryStore 1` | Fresh in-memory store per launch |
@@ -132,16 +132,16 @@ events. Real typing should be verified manually.
 
 ## Architecture & project layout
 
-- **Persistence:** SwiftData with graceful recovery — an unreadable store is
+- **Persistence:** SwiftData with graceful recovery, an unreadable store is
   quarantined (never deleted) and a fresh one is created; the app surfaces a
   banner instead of crashing. Notes are CloudKit-friendly by design (stable
   UUIDs, createdAt/updatedAt, no transient UI state).
 - **Settings:** Launch at Login (`SMAppService`), shortcut recorder, panel
-  position, Record Source Application (**off by default** — stores only app
+  position, Record Source Application (**off by default**, stores only app
   name + bundle ID), appearance (system/light/dark).
 - **Menu bar:** New Quick Note, New Note, Open Notes, Search Notes,
   Launch at Login toggle, Settings, Quit.
-- **Onboarding:** a single card on first launch — no accounts, no permissions.
+- **Onboarding:** a single card on first launch, no accounts, no permissions.
 - **Accessibility:** full labels, keyboard navigation, VoiceOver-friendly rows.
 
 ```
@@ -160,12 +160,12 @@ docs/               # README screenshots
 ```
 
 Design rule: *every extra interaction is a product bug unless it provides real
-value* — shortcut → type → Return stays sacred.
+value*, shortcut → type → Return stays sacred.
 
 ## Privacy
 
 No account. No cloud. No sync. No telemetry. QuickNote has no network code at
-all — notes live in a local SwiftData store on your Mac.
+all, notes live in a local SwiftData store on your Mac.
 
 ---
 

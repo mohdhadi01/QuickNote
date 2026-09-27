@@ -35,11 +35,11 @@ trap 'rm -rf "$STAGING"; hdiutil detach "/Volumes/$VOL_NAME" -force -quiet >/dev
 mkdir -p "$OUT_DIR"
 
 cat > "$STAGING/INSTALL.txt" <<'EOF'
-QuickNote — instant notes for macOS
+QuickNote, instant notes for macOS
 ====================================
 
 Capture a thought from anywhere: press Control+Shift+Space,
-type, press Return. The note is saved on your Mac — nothing leaves it.
+type, press Return. The note is saved on your Mac, nothing leaves it.
 
 INSTALL
 -------
@@ -48,7 +48,7 @@ Drag QuickNote onto the Applications folder icon on the right.
 FIRST LAUNCH (one time)
 -----------------------
 Because this build isn't notarized yet, macOS shows a one-time warning:
-"Apple could not verify QuickNote". It is safe — it has no network
+"Apple could not verify QuickNote". It is safe. It has no network
 access and stores notes only on this Mac.
 
 1. Click "Done" on the warning.
@@ -60,7 +60,7 @@ access and stores notes only on this Mac.
 TIP
 ---
 - Enable "Launch at Login" in the menu bar icon or Settings > General.
-- Close the window any time — the menu bar icon and the capture
+- Close the window any time. The menu bar icon and the capture
   shortcut keep working.
 - Change the shortcut in Settings > Quick Capture.
 EOF
@@ -107,7 +107,7 @@ end tell
 APPLESCRIPT
 then
     LAYOUT_OK=0
-    echo "   background/failed — retrying without the background picture"
+    echo "   background step failed, retrying without the background picture"
     osascript <<'APPLESCRIPT' || LAYOUT_OK=0
 tell application "Finder"
     tell disk "QuickNote"
@@ -156,7 +156,7 @@ if [ ${#NOTARIZE_ARGS[@]} -eq 3 ]; then
     xcrun stapler staple "$DMG"
     xcrun stapler validate "$DMG"
 else
-    echo "   ℹ︎ Not notarized — first launch needs Open Anyway (see INSTALL.txt)."
+    echo "   ℹ︎ Not notarized. First launch needs Open Anyway (see INSTALL.txt)."
     echo "     To ship without Gatekeeper warnings, enroll in the Apple Developer"
     echo "     Program and re-run with a Developer ID identity + NOTARIZE_* env vars."
 fi
