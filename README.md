@@ -1,51 +1,66 @@
+<div align="center">
+
+<img src="docs/icon-256.png" width="110" alt="QuickNote app icon">
+
 # QuickNote
 
-A native macOS instant-notes utility: press a global shortcut from anywhere,
-type, press Return — the thought is saved locally and the panel disappears.
-Built with Swift + SwiftUI + AppKit + SwiftData, targeting macOS 26+.
+**Capture a thought before it disappears.**
 
-## The core interaction
+A native macOS instant-notes utility — press one shortcut from anywhere,
+type, hit Return. The note is saved on your Mac and the panel vanishes.
 
-```
-⌃⇧Space   (default shortcut, configurable)
-  → floating glass panel appears near your cursor, already focused
-  → type
-  → Return saves the note and dismisses the panel
-```
+[![macOS 26+](https://img.shields.io/badge/macOS-26%2B-black)](https://github.com/mohdhadi01/QuickNote)
+[![Swift](https://img.shields.io/badge/Swift-SwiftUI%20%2B%20AppKit-F05138?logo=swift&logoColor=white)](https://github.com/mohdhadi01/QuickNote)
+[![SwiftData](https://img.shields.io/badge/Storage-SwiftData-blue)](https://github.com/mohdhadi01/QuickNote)
+[![Universal](https://img.shields.io/badge/Apple%20silicon-%20%26%20Intel-lightgrey)](https://github.com/mohdhadi01/QuickNote)
+[![Release](https://img.shields.io/badge/Download-v1.0-4a56d6)](https://github.com/mohdhadi01/QuickNote/releases/latest)
 
-- The default shortcut is **⌃⇧Space** — chosen to avoid stock macOS bindings
-  (⌘Space Spotlight, ⌃Space/⌃⌥Space input switching) and common app defaults
-  (e.g. VS Code's ⌘⇧Space). Change it in **Settings → Quick Capture** with the
-  native shortcut recorder (Escape cancels recording).
-- **⇧Return** inserts a newline, **Return** saves, **Escape** discards.
-- Clicking away with text in the panel **saves** it (never loses text); with an
-  empty panel it dismisses. Quitting with unsaved text also preserves it.
+</div>
+
+![QuickNote main window in dark mode — sidebar, note list, and editor](docs/main-dark.png)
+
+QuickNote is built for the moment an idea shows up mid-task: no window hunting,
+no new-note button, no title field, no account. One keystroke, the thought,
+done — and since the notes live in a local SwiftData database, nothing ever
+leaves your Mac.
+
+<p align="center"><a href="https://github.com/mohdhadi01/QuickNote/releases/latest/download/QuickNote-1.0.dmg"><img src="https://img.shields.io/badge/⬇_Download-QuickNote_1.0_.dmg-4a56d6?style=for-the-badge" alt="Download QuickNote 1.0 DMG"></a></p>
+
+> **First launch:** the build isn't notarized yet, so macOS shows a one-time
+> warning. Click **Done**, then open **System Settings → Privacy & Security →
+> Open Anyway → Open**. (Or run `xattr -cr /Applications/QuickNote.app`.)
+
+## What it looks like
+
+| Light | Quick capture |
+| --- | --- |
+| ![Main window, light](docs/main-light.png) | ![Capture panel with a typed note](docs/capture-typed-light.png) |
+
+The full experience — shortcut demo, feature tour, blog — lives on the
+marketing site: **[QuickNote-Website](https://github.com/mohdhadi01/QuickNote-Website)**.
 
 ## Features
 
-- **Multi-select**: ⌘-click toggles, ⇧-click selects a range, ⌘A selects all; batch Pin/Unpin/Copy/Merge/Trash panel; Esc collapses to one note.
-- **Drag & drop**: drag rows out as text; drag notes onto sidebar sections to pin/trash/restore them; drop text or .txt files into the list to create notes.
-- **First-line-as-heading editor**: quick captures have no title field — the first line renders as a heading visually only; stored content is never modified.
+- **⌃⇧Space from anywhere** — a Liquid Glass panel (non-activating `NSPanel`) works over any app, Space, and full-screen apps; no Accessibility permission, ever (the hotkey uses Carbon `RegisterEventHotKey`).
+- **First line becomes the heading** — quick captures have no title field; the first line renders as a heading visually, stored text is never modified.
+- **Keyboard first** — ↑/↓ walk the list, ⌘1–5 switch sections, ⌘F searches, Return opens, Esc is always contextual.
+- **Multi-select & merge** — ⌘-click toggles, ⇧-click ranges, ⌘A selects all; batch Pin/Copy/Merge/Trash.
+- **Drag & drop** — drag notes onto sidebar sections to organize; drop text or `.txt` files to create notes instantly.
+- **Pin, search, trash** — pinned shortlist, debounced global search, restore-or-purge Trash.
+- **Quietly native** — launch at login (silent), menu bar companion, light/dark that follows the system, Reduce Motion/Transparency aware.
 
-- Quick capture panel: Liquid Glass (`NSGlassEffectView`), non-activating
-  NSPanel that works over any app, Space, and full-screen app; positioned near
-  the cursor (or centered on screen — a setting); grows with content.
-- Main window: Inbox / Today / All Notes / Pinned / Trash sidebar, note list
-  with derived titles + previews + relative timestamps, document-like editor
-  with autosave (debounced), search (debounced, case-insensitive, global).
-- Pin/unpin via editor button or context menu; trash/restore; permanent delete
-  requires confirmation.
-- Settings: Launch at Login (SMAppService), shortcut recorder, panel position,
-  Record Source Application (**off by default** — stores only app name +
-  bundle ID), appearance (system/light/dark).
-- Menu bar item: New Quick Note, New Note, Open Notes, Search Notes, **Launch at Login toggle**, Settings, Quit.
-- Onboarding is a single card on first launch — no accounts, no permissions.
-- Persistence via SwiftData with graceful recovery: an unreadable store is
-  quarantined (never deleted) and a fresh one is created; the app surfaces a
-  banner instead of crashing. Notes are CloudKit-friendly by design (stable
-  UUIDs, createdAt/updatedAt, no transient UI state).
-- Accessibility: full labels, keyboard navigation, Reduce Motion and Reduce
-  Transparency support, VoiceOver-friendly rows.
+<div align="center">
+
+⌃ &nbsp;⇧ &nbsp;**Space** &nbsp;→&nbsp; *type* &nbsp;→&nbsp; **↩** &nbsp;=&nbsp; **saved**
+
+</div>
+
+## Download
+
+Grab the latest DMG from [**Releases**](https://github.com/mohdhadi01/QuickNote/releases/latest) —
+macOS 26+, Apple silicon & Intel, ~3 MB, free. Drag QuickNote to Applications
+and you're done. The step-by-step first-launch instructions are in the release
+notes and inside the DMG.
 
 ## Build & run
 
@@ -58,9 +73,25 @@ xcodebuild -project QuickNote.xcodeproj -scheme QuickNote -configuration Debug b
 xcodebuild -project QuickNote.xcodeproj -scheme QuickNote -configuration Release build
 ```
 
-The app is ad-hoc signed with App Sandbox; no special permissions are
-requested (no Accessibility permission needed — the hotkey uses Carbon
+The app is signed with App Sandbox; no special permissions are requested
+(no Accessibility permission needed — the hotkey uses Carbon
 `RegisterEventHotKey`).
+
+### Packaging
+
+```bash
+Scripts/MakeDMG.sh              # signed DMG with a real drag-and-drop installer window
+```
+
+Notarized builds (requires a paid Apple Developer Program membership):
+
+```bash
+SIGN_IDENTITY="Developer ID Application: NAME (TEAMID)" \
+NOTARIZE_APPLE_ID=you@example.com \
+NOTARIZE_PASSWORD=app-specific-password \
+NOTARIZE_TEAM_ID=TEAMID \
+Scripts/MakeDMG.sh
+```
 
 ## Tests
 
@@ -83,6 +114,7 @@ events. Real typing should be verified manually.
 | `-quicknote.debugShowCapture` | Opens the capture panel 1 s after launch |
 | `-quicknote.debugOpenSettings` | Opens Settings 1 s after launch |
 | `-quicknote.debugSnapshot` | Renders light+dark PNGs of all windows to the app container's `tmp/quicknote-snapshots/`, then quits |
+| `-quicknote.demoData` | Seeds the curated sample notes (used for screenshots — never real user data) |
 | `-quicknote.forceOnboarding` | Always starts at onboarding |
 | `-quicknote.seedNote <text>` | Seeds one note at launch |
 | `-quicknote.inMemoryStore 1` | Fresh in-memory store per launch |
@@ -98,7 +130,19 @@ events. Real typing should be verified manually.
   Launch at Login toggle, panel position.
 - Restart the app: notes persist.
 
-## Project layout
+## Architecture & project layout
+
+- **Persistence:** SwiftData with graceful recovery — an unreadable store is
+  quarantined (never deleted) and a fresh one is created; the app surfaces a
+  banner instead of crashing. Notes are CloudKit-friendly by design (stable
+  UUIDs, createdAt/updatedAt, no transient UI state).
+- **Settings:** Launch at Login (`SMAppService`), shortcut recorder, panel
+  position, Record Source Application (**off by default** — stores only app
+  name + bundle ID), appearance (system/light/dark).
+- **Menu bar:** New Quick Note, New Note, Open Notes, Search Notes,
+  Launch at Login toggle, Settings, Quit.
+- **Onboarding:** a single card on first launch — no accounts, no permissions.
+- **Accessibility:** full labels, keyboard navigation, VoiceOver-friendly rows.
 
 ```
 QuickNote/
@@ -111,8 +155,23 @@ QuickNote/
 └── Support/        # logging (OSLog), QA snapshot tooling
 QuickNoteTests/     # 65 unit tests (all green)
 QuickNoteUITests/   # hermetic UI tests
-Scripts/            # app-icon generator (swift Scripts/GenerateAppIcon.swift)
+Scripts/            # DMG packaging, icon generator
+docs/               # README screenshots
 ```
 
 Design rule: *every extra interaction is a product bug unless it provides real
 value* — shortcut → type → Return stays sacred.
+
+## Privacy
+
+No account. No cloud. No sync. No telemetry. QuickNote has no network code at
+all — notes live in a local SwiftData store on your Mac.
+
+---
+
+<div align="center">
+
+**[Download the DMG](https://github.com/mohdhadi01/QuickNote/releases/latest)** ·
+**[Website repo](https://github.com/mohdhadi01/QuickNote-Website)**
+
+</div>
