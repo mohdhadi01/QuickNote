@@ -57,10 +57,21 @@ marketing site: **[QuickNote-Website](https://github.com/mohdhadi01/QuickNote-Ma
 
 ## Download
 
-Grab the latest DMG from [**Releases**](https://github.com/mohdhadi01/QuickNote-Mac/releases/latest),
-macOS 26+, Apple silicon & Intel, ~3 MB, free. Drag QuickNote to Applications
-and you're done. The step-by-step first-launch instructions are in the release
-notes and inside the DMG.
+The smoothest path, no security prompts at all:
+
+```bash
+brew install --cask mohdhadi01/tap/quicknote
+```
+
+Homebrew drops QuickNote into Applications and clears the Gatekeeper
+quarantine flag during install, so it opens straight away.
+
+Prefer the classic way? Grab the latest DMG from
+[**Releases**](https://github.com/mohdhadi01/QuickNote-Mac/releases/latest)
+(macOS 26+, Apple silicon & Intel, ~3 MB, free), drag QuickNote to
+Applications, and on first launch click **Done**, then
+**System Settings → Privacy & Security → Open Anyway**. The step-by-step
+instructions are in the release notes and inside the DMG.
 
 ## Build & run
 
