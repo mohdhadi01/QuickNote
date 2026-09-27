@@ -9,11 +9,11 @@
 A native macOS instant-notes utility, press one shortcut from anywhere,
 type, hit Return. The note is saved on your Mac and the panel vanishes.
 
-[![macOS 26+](https://img.shields.io/badge/macOS-26%2B-black)](https://github.com/mohdhadi01/QuickNote)
-[![Swift](https://img.shields.io/badge/Swift-SwiftUI%20%2B%20AppKit-F05138?logo=swift&logoColor=white)](https://github.com/mohdhadi01/QuickNote)
-[![SwiftData](https://img.shields.io/badge/Storage-SwiftData-blue)](https://github.com/mohdhadi01/QuickNote)
-[![Universal](https://img.shields.io/badge/Apple%20silicon-%20%26%20Intel-lightgrey)](https://github.com/mohdhadi01/QuickNote)
-[![Release](https://img.shields.io/badge/Download-v1.0-4a56d6)](https://github.com/mohdhadi01/QuickNote/releases/latest)
+[![macOS 26+](https://img.shields.io/badge/macOS-26%2B-black)](https://github.com/mohdhadi01/QuickNote-Mac)
+[![Swift](https://img.shields.io/badge/Swift-SwiftUI%20%2B%20AppKit-F05138?logo=swift&logoColor=white)](https://github.com/mohdhadi01/QuickNote-Mac)
+[![SwiftData](https://img.shields.io/badge/Storage-SwiftData-blue)](https://github.com/mohdhadi01/QuickNote-Mac)
+[![Universal](https://img.shields.io/badge/Apple%20silicon-%20%26%20Intel-lightgrey)](https://github.com/mohdhadi01/QuickNote-Mac)
+[![Release](https://img.shields.io/badge/Download-v1.0-4a56d6)](https://github.com/mohdhadi01/QuickNote-Mac/releases/latest)
 
 </div>
 
@@ -24,7 +24,7 @@ no new-note button, no title field, no account. One keystroke, the thought,
 done, and since the notes live in a local SwiftData database, nothing ever
 leaves your Mac.
 
-<p align="center"><a href="https://github.com/mohdhadi01/QuickNote/releases/latest/download/QuickNote-1.0.dmg"><img src="https://img.shields.io/badge/⬇_Download-QuickNote_1.0_.dmg-4a56d6?style=for-the-badge" alt="Download QuickNote 1.0 DMG"></a></p>
+<p align="center"><a href="https://github.com/mohdhadi01/QuickNote-Mac/releases/latest/download/QuickNote-1.0.dmg"><img src="https://img.shields.io/badge/⬇_Download-QuickNote_1.0_.dmg-4a56d6?style=for-the-badge" alt="Download QuickNote 1.0 DMG"></a></p>
 
 > **First launch:** the build isn't notarized yet, so macOS shows a one-time
 > warning. Click **Done**, then open **System Settings → Privacy & Security →
@@ -37,7 +37,7 @@ leaves your Mac.
 | ![Main window, light](docs/main-light.png) | ![Capture panel with a typed note](docs/capture-typed-light.png) |
 
 The full experience, shortcut demo, feature tour, blog, lives on the
-marketing site: **[QuickNote-Website](https://github.com/mohdhadi01/QuickNote-Website)**.
+marketing site: **[QuickNote-Website](https://github.com/mohdhadi01/QuickNote-Mac-Mac-Website)**.
 
 ## Features
 
@@ -57,7 +57,7 @@ marketing site: **[QuickNote-Website](https://github.com/mohdhadi01/QuickNote-We
 
 ## Download
 
-Grab the latest DMG from [**Releases**](https://github.com/mohdhadi01/QuickNote/releases/latest),
+Grab the latest DMG from [**Releases**](https://github.com/mohdhadi01/QuickNote-Mac/releases/latest),
 macOS 26+, Apple silicon & Intel, ~3 MB, free. Drag QuickNote to Applications
 and you're done. The step-by-step first-launch instructions are in the release
 notes and inside the DMG.
@@ -171,7 +171,7 @@ all, notes live in a local SwiftData store on your Mac.
 
 <div align="center">
 
-**[Download the DMG](https://github.com/mohdhadi01/QuickNote/releases/latest)** ·
-**[Website repo](https://github.com/mohdhadi01/QuickNote-Website)**
+**[Download the DMG](https://github.com/mohdhadi01/QuickNote-Mac/releases/latest)** ·
+**[Website repo](https://github.com/mohdhadi01/QuickNote-Mac-Mac-Website)**
 
 </div>
