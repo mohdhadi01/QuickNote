@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import Foundation
+import ServiceManagement
 
 /// QA instrumentation: renders the app's real windows and hosted views to
 /// flattened PNG files without requiring Screen Recording permission (the app
@@ -151,6 +152,11 @@ final class DebugSnapshotDriver {
         if !environment.settings.hasCompletedOnboarding {
             environment.settings.hasCompletedOnboarding = true
         }
+        // Marketing runs must never be (or keep) a login item: the onboarding
+        // capture should show the first-run offer, and no debug binary should
+        // linger in the user's login items.
+        try? SMAppService.mainApp.unregister()
+        environment.loginItem.refreshStatus()
         Task { [weak self] in
             try? await Task.sleep(nanoseconds: 1_500_000_000)
             await MainActor.run {
@@ -289,9 +295,10 @@ final class DebugSnapshotDriver {
         DebugSnapshot.captureHosted(
             OnboardingView()
                 .environmentObject(environment.settings)
+                .environmentObject(environment.loginItem)
                 .environmentObject(AccessibilityEnvironmentFlags.shared)
                 .background(Color(nsColor: .windowBackgroundColor)),
-            size: CGSize(width: 560, height: 460),
+            size: CGSize(width: 560, height: 540),
             name: "onboarding-\(suffix)",
             appearance: appearance
         )

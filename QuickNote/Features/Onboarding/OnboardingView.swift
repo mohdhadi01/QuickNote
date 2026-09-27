@@ -5,6 +5,7 @@ import SwiftUI
 struct OnboardingView: View {
     @EnvironmentObject private var settings: SettingsService
     @EnvironmentObject private var flags: AccessibilityEnvironmentFlags
+    @EnvironmentObject private var loginItem: LoginItemService
 
     var body: some View {
         ZStack {
@@ -31,6 +32,8 @@ struct OnboardingView: View {
 
                 shortcutShowcase
 
+                launchAtLoginRow
+
                 VStack(spacing: DesignTokens.Spacing.xs) {
                     Text("Press the shortcut, type, and press Return.")
                         .font(.system(size: 13))
@@ -52,6 +55,48 @@ struct OnboardingView: View {
             .padding(DesignTokens.Spacing.xxxl)
         }
         .preferredColorScheme(settings.appearanceMode.colorScheme)
+    }
+
+    // First-run offer: new users never find Launch at Login buried in
+    // Settings, so surface it once here with a one-tap enable.
+    @ViewBuilder
+    private var launchAtLoginRow: some View {
+        if loginItem.isEnabled {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.circle.fill")
+                Text("Will open automatically when you start your Mac")
+            }
+            .font(.system(size: 11.5))
+            .foregroundStyle(AuroraPalette.tertiaryText)
+        } else {
+            VStack(spacing: DesignTokens.Spacing.xs) {
+                Button {
+                    try? loginItem.setEnabled(true)
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("Enable Launch at Login")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .padding(.horizontal, 16)
+                    .frame(height: 34)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(Color.white.opacity(0.08))
+                    )
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .strokeBorder(AuroraPalette.glassEdgeSoft, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("onboarding-launch-at-login")
+                Text("QuickNote opens with your Mac and waits in the menu bar.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(AuroraPalette.tertiaryText)
+            }
+        }
     }
 
     private var shortcutShowcase: some View {
